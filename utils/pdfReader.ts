@@ -1,27 +1,11 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-// 【CRITICAL FIX】
-// PDF.js 5.x uses ES Modules (.mjs). The worker file in node_modules is "pdf.worker.mjs".
-// We use Vite's asset URL resolution to bundle the local worker file.
-// This ensures the worker version matches the installed npm package version (5.4.530).
-
-try {
-  // Check if import.meta.url is available (it should be in Vite/ESM)
-  // We use a conditional check to avoid "Invalid URL" TypeError if it's undefined in some environments.
-  const baseUrl = import.meta.url;
-  
-  if (baseUrl) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.mjs",
-      baseUrl
-    ).toString();
-  } else {
-    // Should not happen in a valid Vite module environment
-    console.error("import.meta.url is missing");
-  }
-} catch (e) {
-  console.error("PDF Worker Configuration Failed:", e);
-}
+// 【CRITICAL CONFIGURATION】
+// 解决 "Failed to construct 'URL': Invalid URL" 错误。
+// 我们直接指向 jsDelivr CDN 上的 Worker 文件。
+// 这里的版本号 (pdfjsLib.version) 会动态匹配安装的 npm 包版本 (5.4.530)，确保主线程与 Worker 版本一致。
+// 这种方式完全绕过了本地 URL 解析的潜在问题。
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version || '5.4.530'}/build/pdf.worker.mjs`;
 
 /**
  * 读取 PDF 文件并提取文本
@@ -31,10 +15,10 @@ export const readPdfText = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     
     // 加载 PDF 文档
-    // 使用 Standard Font Data CDN (cMaps) - cMaps 纯数据文件通常跨小版本兼容
+    // 同样使用 CDN 加载字体映射文件 (cMaps)
     const loadingTask = pdfjsLib.getDocument({ 
         data: arrayBuffer,
-        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
+        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version || '5.4.530'}/cmaps/`,
         cMapPacked: true,
     });
     
@@ -57,8 +41,8 @@ export const readPdfText = async (file: File): Promise<string> => {
     console.error("PDF Parsing Error:", error);
     const msg = error.message || "Unknown error";
     
-    if (msg.includes("Worker") || msg.includes("version") || msg.includes("Invalid URL")) {
-        throw new Error("PDF环境版本不一致 (Worker Mismatch)。请执行: rm -rf node_modules && npm install && npm run build");
+    if (msg.includes("Worker") || msg.includes("version") || msg.includes("Setting up fake worker failed")) {
+        throw new Error(`PDF Worker 加载异常 (v${pdfjsLib.version || 'unknown'})。请检查网络是否能访问 cdn.jsdelivr.net。`);
     }
     throw new Error(`PDF 解析失败: ${msg}`);
   }
