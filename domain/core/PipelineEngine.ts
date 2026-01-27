@@ -93,7 +93,7 @@ export class PipelineEngine {
         ? { ...s, status: StepStatus.IDLE } 
         : s
     );
-    this.saveSnapshot(); // 强制持久化状态
+    this.saveSnapshot(); // 关键：物理落库
     this.notifySteps();
   }
 
@@ -108,26 +108,26 @@ export class PipelineEngine {
       }
 
       this.setProcessing(false);
-      this.updateStepStatus(6, StepStatus.WARN);
       
-      if (this.context.artifacts.auditHistory.length === 0) {
-          const dummyReport: AuditReport = {
-              round: 1,
-              timestamp: new Date().toLocaleTimeString(),
-              passed: true,
-              score: 100,
-              summary: "人工干预：跳过专家审计流程，直接进入交付阶段。",
-              issues: [],
-              fixSummary: ["手动绕过"]
-          };
-          this.updateContext(prev => ({
-            ...prev,
-            artifacts: { ...prev.artifacts, auditHistory: [dummyReport] }
-          }));
-      }
+      // 插入一条人工审计记录
+      const dummyReport: AuditReport = {
+          round: (this.context.artifacts.auditHistory.length || 0) + 1,
+          timestamp: new Date().toLocaleTimeString(),
+          passed: true,
+          score: 100,
+          summary: "人工干预：跳过自动化审计流程，用户已确认当前材料合规性。",
+          issues: [],
+          fixSummary: ["手动跳过所有合规项校验"]
+      };
 
-      this.saveSnapshot();
-      this.addLog('✅ 交付包已构建完成，请前往灵动岛下载。', 'success');
+      this.updateContext(prev => ({
+        ...prev,
+        artifacts: { ...prev.artifacts, auditHistory: [...prev.artifacts.auditHistory, dummyReport] }
+      }));
+
+      this.updateStepStatus(6, StepStatus.WARN); // 设为 WARN 状态代表完成但存在非关键偏差
+      this.saveSnapshot(); // 物理落库
+      this.addLog('✅ 交付包已物理封箱，请通过灵动岛下载。', 'success');
   }
 
   public async retry() {
@@ -164,7 +164,7 @@ export class PipelineEngine {
   public async reset() {
     this.stop();
     this.addLog('🧹 系统指令：正在彻底清除当前创作现场与缓存数据...', 'system');
-    await db.clearSession();
+    await db.clearSession(); // 物理删除
     this.steps = JSON.parse(JSON.stringify(INITIAL_STEPS));
     this.context = {
       prdContent: '',

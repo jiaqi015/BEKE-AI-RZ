@@ -203,7 +203,7 @@ const App: React.FC = () => {
     if (isProcessing) return;
     if (currentStepId !== 0) resetPipeline();
     setIsDreaming(true);
-    setInputPrd("// 正在为您构思一个充满商业想象力的产品原型...");
+    setInputPrd("// 正在为您构思一个具有申报价值的产品点子...");
     try {
         const idea = await creativeDirector.generateIdea();
         setInputPrd(idea);
@@ -332,7 +332,9 @@ const App: React.FC = () => {
                             <div className="relative w-full max-w-xl mx-auto flex flex-col bg-gray-100/30 dark:bg-white/5 rounded-3xl border border-white/10 overflow-hidden shadow-inner backdrop-blur-xl mb-8">
                                 <textarea
                                     className="w-full h-40 p-6 bg-transparent outline-none transition-all font-mono text-sm dark:text-white/90 text-gray-800 resize-none placeholder-gray-500 dark:placeholder-white/40 custom-scrollbar"
-                                    placeholder="// 请输入您的纯文字创意、点子或者 PRD 内容...\n// 您可以直接粘贴文本，或点击下方按钮上传 PDF 参考文档进行深度编译。"
+                                    placeholder={`// 请输入您的纯文字创意、点子或者 PRD 内容...
+// 您可以直接粘贴文本，或点击下方按钮上传 PDF 参考文档进行深度编译。
+// 陈新软 AI 将基于语义模型为您深度编译全套合规申报材料。`}
                                     value={inputPrd}
                                     onChange={(e) => setInputPrd(e.target.value)}
                                 />
@@ -369,16 +371,26 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* 免责声明 */}
-                            <div className="max-w-xl mx-auto px-6 py-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm animate-in fade-in slide-in-from-top-4 duration-1000 delay-300">
-                                <div className="flex flex-col gap-2 text-left">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">使用指南 & 免责声明</span>
+                            {/* 免责声明 & 运行提示 */}
+                            <div className="max-w-xl mx-auto space-y-4 animate-in fade-in slide-in-from-top-4 duration-1000 delay-300">
+                                <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
+                                    <div className="flex flex-col gap-2 text-left">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">使用指南 & 免责声明</span>
+                                        </div>
+                                        <p className="text-[11px] leading-relaxed text-zinc-400 font-medium">
+                                            已经打通 <span className="text-zinc-200 font-bold">Gemini 核心</span>，使用需保持网络🪜连接。本工具生成的软著材料仅供参考，<span className="text-amber-500/80">请根据实际业务自行辨别并核对</span>。
+                                        </p>
                                     </div>
-                                    <p className="text-[11px] leading-relaxed text-zinc-400 font-medium">
-                                        已经打通 <span className="text-zinc-200 font-bold">Gemini 核心</span>，使用需保持网络🪜连接。本工具生成的软著材料仅供参考，<span className="text-amber-500/80">请根据实际业务自行辨别并核对</span>。
-                                    </p>
+                                </div>
+                                <div className="px-6 py-4 bg-rose-500/5 rounded-2xl border border-rose-500/10 backdrop-blur-sm ring-1 ring-rose-500/5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_#f43f5e]"></div>
+                                        <p className="text-[11px] font-bold text-rose-500/90 tracking-widest text-left">
+                                            全程 AI 编写使用PRO模型，需要大约50分钟，耐心不断网挂机等待
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -468,18 +480,29 @@ const App: React.FC = () => {
                           </div>
                         )}
 
-                        {/* 运行中：仅显示暂停 */}
+                        {/* 运行中：支持暂停和步骤6的强制跳过 */}
                         {isProcessing && !showGapFiller && (
-                            <button 
-                                onClick={handleStop} 
-                                className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full font-black text-[11px] transition-all active:scale-90 flex items-center gap-2"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                暂停
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                                <button 
+                                    onClick={handleStop} 
+                                    className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full font-black text-[11px] transition-all active:scale-90 flex items-center gap-2"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                    暂停
+                                </button>
+                                {currentStepId === 6 && (
+                                    <button 
+                                        onClick={handleSkipAuditAction} 
+                                        className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-full font-black text-[11px] transition-all active:scale-95 whitespace-nowrap flex items-center gap-2"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                                        跳过审计并打包
+                                    </button>
+                                )}
+                            </div>
                         )}
 
-                        {/* 暂停中：显示继续与重来 */}
+                        {/* 暂停中：显示继续、重来，以及步骤6的强制跳过 */}
                         {isStopped && (
                             <div className="flex items-center gap-1.5 animate-in slide-in-from-bottom-2">
                                 <button 
@@ -489,6 +512,15 @@ const App: React.FC = () => {
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     继续创作
                                 </button>
+                                {currentStepId === 6 && (
+                                    <button 
+                                        onClick={handleSkipAuditAction} 
+                                        className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-full font-black text-[11px] transition-all active:scale-95 whitespace-nowrap flex items-center gap-2"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                                        跳过审计并打包
+                                    </button>
+                                )}
                                 <button 
                                     onClick={handleReset} 
                                     className="px-5 py-2 bg-white/10 hover:bg-rose-500/20 text-white/60 hover:text-rose-400 rounded-full font-black text-[11px] transition-all active:scale-95 whitespace-nowrap"
@@ -496,13 +528,6 @@ const App: React.FC = () => {
                                     放弃重来
                                 </button>
                             </div>
-                        )}
-
-                        {/* 审计环节特殊处理：跳过按钮 */}
-                        {currentStepId === 6 && !isFinished && !isProcessing && (
-                            <button onClick={handleSkipAuditAction} className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-full font-black text-[11px] transition-all active:scale-95 whitespace-nowrap">
-                                跳过审计并打包
-                            </button>
                         )}
 
                         {/* 已完成：显示下载与新任务 */}
