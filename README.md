@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 陈新软 AI - 部署指南
 
-# Run and deploy your AI Studio app
+本项目已适配 Vercel 一键部署。
 
-This contains everything you need to run your app locally.
+## 🚀 极其简单的部署步骤
 
-View your app in AI Studio: https://ai.studio/apps/drive/1wM_qKhZAgP1FDY_zn87faQE6iN8A3s6j
+1. **推送代码**：将本项目推送到您的 GitHub 仓库。
+2. **导入 Vercel**：在 Vercel 中点击 "Add New..." -> "Project"，选择本仓库。
+3. **配置 Framework**：Vercel 会自动识别为 `Vite`，**不要修改 Build Command**，保持默认即可。
+4. **⚠️ 配置环境变量（必须做！）**：
+   在 Deploy 页面，找到 **Environment Variables** 选项卡，添加以下变量：
 
-## Run Locally
+   | Key (变量名) | Value (变量值) |
+   | :--- | :--- |
+   | `API_KEY` | 您的 Gemini API Key (以 AIza 开头) |
 
-**Prerequisites:**  Node.js
+   > **注意**：如果不配置这个 Key，项目部署后会无法连接 AI 服务。
 
+5. **点击 Deploy**：等待約 1 分钟，直到出现满屏的撒花动画。
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 本地开发
+
+如果需要在本地运行：
+
+1. 确保已安装 Node.js (v20+)。
+2. 运行 `npm install` 安装依赖。
+3. 新建 `.env` 文件，写入 `API_KEY=您的Key`。
+4. 运行 `npm run dev`。

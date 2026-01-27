@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { MainLayout } from './components/Layout/MainLayout';
 import StepIndicator from './components/StepIndicator';
@@ -257,9 +256,9 @@ const App: React.FC = () => {
                                     陈新软 AI
                                 </h1>
                                 {/* "Thank You" Badge */}
-                                <div className="absolute -top-4 -right-24 rotate-6 animate-pulse duration-[3000ms] cursor-default hover:rotate-12 transition-transform">
-                                    <div className="bg-yellow-400 text-black px-2.5 py-1 rounded-tl-none rounded-tr-lg rounded-br-lg rounded-bl-lg text-[10px] font-bold shadow-lg flex items-center gap-1.5 border border-yellow-200">
-                                        <svg className="w-3 h-3 text-red-600 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <div className="absolute -top-6 -right-20 rotate-12 animate-pulse duration-[3000ms] cursor-default hover:rotate-6 transition-transform z-10">
+                                    <div className="bg-[#ffdd00] text-black px-3 py-1.5 rounded-full rounded-bl-none text-[10px] font-bold shadow-[0_4px_12px_rgba(255,221,0,0.3)] flex items-center gap-1.5 border-2 border-white dark:border-black transform hover:scale-110 transition-all">
+                                        <svg className="w-3 h-3 text-red-500 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                         <span>谢谢陈新</span>
                                     </div>
                                 </div>
@@ -272,7 +271,7 @@ const App: React.FC = () => {
                                 <div className="relative w-full">
                                     <textarea
                                         className="relative w-full h-40 p-6 bg-gray-100/50 dark:bg-white/10 border border-transparent dark:border-white/10 rounded-t-3xl rounded-b-lg focus:ring-2 focus:ring-blue-500/30 focus:border-white/20 outline-none transition-all font-mono text-sm dark:text-white/90 text-gray-800 resize-none placeholder-gray-500 dark:placeholder-white/40 backdrop-blur-xl shadow-inner hover:bg-white/60 dark:hover:bg-white/15 custom-scrollbar"
-                                        placeholder="// 请在此处输入产品创意、功能清单 (支持下方 PDF 附件投喂)..."
+                                        placeholder="// 请在此处粘贴 PRD / 创意 / 功能清单 (支持下方 PDF 文档投喂)..."
                                         value={inputPrd}
                                         onChange={(e) => setInputPrd(e.target.value)}
                                     />
@@ -398,46 +397,55 @@ const App: React.FC = () => {
         {/* Floating Action Island */}
         {(!isIdle) && (
             <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
-                <div className="flex items-center gap-1 p-1.5 bg-white/90 dark:bg-black/80 backdrop-blur-2xl border dark:border-white/20 border-white/60 rounded-full shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
-                    
-                    {/* Status Badge */}
-                    <div className="flex items-center gap-3 pl-4 pr-4 py-2 bg-gray-100/50 dark:bg-white/10 rounded-full border border-transparent dark:border-white/5">
-                         <div className="relative flex h-2.5 w-2.5">
-                             <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isFinished ? 'bg-emerald-400' : isStopped || isError ? 'bg-amber-400' : 'bg-blue-400'}`}></span>
-                             <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isFinished ? 'bg-emerald-500' : isStopped || isError ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
-                         </div>
-                         <span className="text-xs font-bold dark:text-white text-gray-800 tracking-wide">{isFinished ? '已完成' : isError ? '异常' : isStopped ? '暂停' : activeStep?.name || '处理中...'}</span>
-                    </div>
+                <div className="flex items-center gap-1 p-1.5 bg-white/90 dark:bg-black/80 backdrop-blur-2xl border dark:border-white/20 border-white/60 rounded-full shadow-2xl ring-1 ring-black/5">
+                   
+                   {/* Stop Button */}
+                   {isProcessing && (
+                      <button 
+                        onClick={handleStop}
+                        className="p-3 rounded-full hover:bg-rose-500/10 text-rose-500 hover:text-rose-600 transition-colors flex items-center justify-center"
+                        title="紧急终止"
+                      >
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                   )}
 
-                    <div className="h-6 w-px bg-gray-300 dark:bg-white/20 mx-1"></div>
+                   {/* Retry Button */}
+                   {isStopped && (
+                       <button 
+                         onClick={retryPipeline}
+                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-xs flex items-center gap-2 shadow-lg transition-transform active:scale-95"
+                       >
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                           <span>断点重试</span>
+                       </button>
+                   )}
+                   
+                   {/* Skip Audit (Only at step 6) */}
+                   {currentStepId === 6 && !isFinished && (
+                       <button 
+                         onClick={handleSkipAudit}
+                         className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 rounded-full font-bold text-xs flex items-center gap-2 transition-transform active:scale-95"
+                       >
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                           <span>跳过审计</span>
+                       </button>
+                   )}
 
-                    {isFinished ? (
-                         <button onClick={handleExportClick} className="bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-2.5 rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            下载交付物 (ZIP)
-                         </button>
-                    ) : (
-                        <>
-                            {currentStepId === 6 && isProcessing && (
-                                <button onClick={handleSkipAudit} className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-5 py-2.5 rounded-full text-xs font-bold shadow-lg transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-                                    跳过审计
-                                </button>
-                            )}
-
-                            {(isError || isStopped) && (
-                                <button onClick={retryPipeline} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-lg transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
-                                    重试
-                                </button>
-                            )}
-                            <button onClick={handleStop} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-500/10 text-zinc-400 hover:text-red-500 transition-all active:scale-90">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </>
-                    )}
+                   {/* Export Button (Available when context has some data) */}
+                   {currentStepId > 1 && (
+                       <button 
+                         onClick={handleExportClick}
+                         className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold text-xs flex items-center gap-2 shadow-lg hover:scale-105 transition-transform active:scale-95"
+                       >
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                           <span>导出交付物</span>
+                       </button>
+                   )}
                 </div>
             </div>
         )}
+
       </div>
     </MainLayout>
   );

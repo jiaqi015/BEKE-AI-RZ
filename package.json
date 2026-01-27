@@ -1,7 +1,6 @@
 {
-  "name": "陈新软-ai",
-  "private": true,
-  "version": "0.0.0",
+  "name": "beke-ai-rz",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,19 +8,25 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.38.0",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "jszip": "3.10.1",
-    "file-saver": "2.0.5",
-    "docx": "8.5.0",
-    "dexie": "3.2.4",
-    "pdfjs-dist": "3.11.174"
+    "@google/genai": "^0.1.2",
+    "dexie": "^3.2.4",
+    "docx": "^8.5.0",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "pdfjs-dist": "^3.11.174",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
