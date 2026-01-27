@@ -3,14 +3,50 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { PipelineStep, StepStatus, RegistrationInfo, PipelineContext, LogEntry } from '../types';
 import { PipelineEngine } from '../domain/core/PipelineEngine';
 
-// Initial Steps Definition (Read-only reference for initial state)
+// 初始步骤定义（采用更友好的文案）
 const INITIAL_STEPS: PipelineStep[] = [
-  { id: 1, key: 'parse', name: '需求扩写与结构分析', description: '智能意图识别与竞品分析', status: StepStatus.IDLE },
-  { id: 2, key: 'gap', name: '信息补全', description: '补全核心申报字段', status: StepStatus.IDLE },
-  { id: 3, key: 'ui_gen', name: 'UI 生成', description: 'AI 绘制真实界面截图', status: StepStatus.IDLE },
-  { id: 4, key: 'doc_gen', name: '文档编译', description: '组装说明书与申请表', status: StepStatus.IDLE },
-  { id: 5, key: 'code_gen', name: '源码构建', description: '基于 UI 蓝图反向生成代码', status: StepStatus.IDLE },
-  { id: 6, key: 'pack', name: '审计打包', description: '一致性校验 & Zip导出', status: StepStatus.IDLE },
+  { 
+    id: 1, 
+    key: 'parse', 
+    name: '深度解析产品蓝图', 
+    description: '通过 AI 联网分析市场趋势并完善您的功能矩阵', 
+    status: StepStatus.IDLE 
+  },
+  { 
+    id: 2, 
+    key: 'gap', 
+    name: '完善申报关键信息', 
+    description: '为了符合官方要求，我们需要您补充一些必要的技术参数', 
+    status: StepStatus.IDLE 
+  },
+  { 
+    id: 3, 
+    key: 'ui_gen', 
+    name: '智能绘制产品原型', 
+    description: '正在构思并渲染高保真的软件操作界面截图', 
+    status: StepStatus.IDLE 
+  },
+  { 
+    id: 4, 
+    key: 'doc_gen', 
+    name: '撰写专业申报文档', 
+    description: '正在将技术架构转化为数千字的规范说明书与申请表', 
+    status: StepStatus.IDLE 
+  },
+  { 
+    id: 5, 
+    key: 'code_gen', 
+    name: '构建合规程序代码', 
+    description: '正在为您生成数千行符合审计要求的源代码鉴别材料', 
+    status: StepStatus.IDLE 
+  },
+  { 
+    id: 6, 
+    key: 'pack', 
+    name: '全量审计与成果交付', 
+    description: '正在进行最后的一致性校验，确保材料 100% 通过率', 
+    status: StepStatus.IDLE 
+  },
 ];
 
 export const usePipelineOrchestrator = () => {
@@ -25,7 +61,7 @@ export const usePipelineOrchestrator = () => {
   const [currentStepId, setCurrentStepId] = useState<number>(0);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isRestored, setIsRestored] = useState(false); // Just for UI loading state if needed
+  const [isRestored, setIsRestored] = useState(false); 
 
   // --- Engine Instance (Singleton per component mount) ---
   const engineRef = useRef<PipelineEngine | null>(null);
@@ -70,7 +106,6 @@ export const usePipelineOrchestrator = () => {
 
   const resetPipeline = useCallback(() => {
      engineRef.current?.reset();
-     // Reset local logs manually as engine might just clear state
      setLogs([]);
   }, []);
 
@@ -86,6 +121,6 @@ export const usePipelineOrchestrator = () => {
     resetPipeline,
     stopProcessing,
     retryPipeline,
-    skipAudit // New export
+    skipAudit
   };
 };

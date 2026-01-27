@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>陈新软 AI - 智能软著编译器</title>
-  <!-- 保留 Tailwind CDN 以维持样式 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script>
@@ -18,9 +17,9 @@
             mono: ['"JetBrains Mono"', '"SF Mono"', '"Noto Sans SC"', 'monospace'],
           },
           colors: {
-            sidebar: '#18181b', 
-            canvas: '#000000',
-            panel: '#27272a',
+            sidebar: 'var(--color-sidebar)', 
+            canvas: 'var(--color-canvas)',
+            panel: 'var(--color-panel)',
             accent: '#007AFF',
           },
           animation: {
@@ -44,14 +43,30 @@
     }
   </script>
   <style>
-    body {
-      background-color: #000000;
-      color: #e4e4e7;
-      background-image: 
-        radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%), 
-        radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
-      background-attachment: fixed;
+    :root {
+      --color-sidebar: #ffffff;
+      --color-canvas: #F5F5F7;
+      --color-panel: #ffffff;
+      --ambient-g1: rgba(0, 122, 255, 0.1);
+      --ambient-g2: rgba(52, 211, 153, 0.03);
+      --ambient-g3: rgba(236, 72, 153, 0.03);
+      --scrollbar-thumb: rgba(0, 0, 0, 0.1);
     }
+    .dark {
+      --color-sidebar: #18181b;
+      --color-canvas: #000000;
+      --color-panel: #27272a;
+      --ambient-g1: rgba(0, 122, 255, 0.15);
+      --ambient-g2: rgba(52, 211, 153, 0.05);
+      --ambient-g3: rgba(236, 72, 153, 0.05);
+      --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+    }
+    
+    body {
+      background-color: var(--color-canvas);
+      transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s;
+    }
+    
     .ambient-light {
       position: fixed;
       top: 0;
@@ -61,16 +76,22 @@
       pointer-events: none;
       z-index: -1;
       background: 
-        radial-gradient(circle at 50% 0%, rgba(0, 122, 255, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 0% 0%, rgba(52, 211, 153, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 100% 100%, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
+        radial-gradient(circle at 50% 0%, var(--ambient-g1) 0%, transparent 50%),
+        radial-gradient(circle at 0% 0%, var(--ambient-g2) 0%, transparent 40%),
+        radial-gradient(circle at 100% 100%, var(--ambient-g3) 0%, transparent 40%);
       filter: blur(60px);
       opacity: 0.8;
+      transition: background 0.8s ease;
     }
+    
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+    ::-webkit-scrollbar-thumb { 
+      background: var(--scrollbar-thumb); 
+      border-radius: 10px; 
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.4); }
+    
     .glass-panel {
       background: rgba(255, 255, 255, 0.03);
       backdrop-filter: blur(20px);
@@ -78,12 +99,10 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
-    .glass-panel-light {
+    .light .glass-panel {
       background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(0, 0, 0, 0.05);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
     }
   </style>
 <script type="importmap">
@@ -97,10 +116,12 @@
     "file-saver": "https://esm.sh/file-saver@2.0.5",
     "docx": "https://esm.sh/docx@9.5.1",
     "dexie": "https://esm.sh/dexie@4.2.1",
+    "pdfjs-dist": "https://esm.sh/pdfjs-dist@5.4.530",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "pdfjs-dist": "https://esm.sh/pdfjs-dist@^5.4.530",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "path": "https://esm.sh/path@^0.12.7",
+    "url": "https://esm.sh/url@^0.11.4"
   }
 }
 </script>
@@ -108,7 +129,6 @@
 <body class="bg-canvas text-zinc-200 min-h-screen antialiased selection:bg-blue-500/30 selection:text-blue-200 overflow-hidden">
   <div class="ambient-light"></div>
   <div id="root" class="h-full relative z-10"></div>
-  <!-- Vite Entry Point -->
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

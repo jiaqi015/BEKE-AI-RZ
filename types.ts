@@ -3,6 +3,8 @@
 // Layer: Domain Entities (Core Business Logic)
 // ==========================================
 
+export type Theme = 'light' | 'dark';
+
 export enum StepStatus {
   IDLE = 'idle',
   RUNNING = 'running',

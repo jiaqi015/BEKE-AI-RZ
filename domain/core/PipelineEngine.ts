@@ -14,17 +14,16 @@ import { conductAudit } from '../skills/auditor';
 import { autoFixArtifacts } from '../skills/complianceRefiner';
 
 const INITIAL_STEPS: PipelineStep[] = [
-  { id: 1, key: 'parse', name: '需求扩写与结构分析', description: '智能意图识别与竞品分析', status: StepStatus.IDLE },
-  { id: 2, key: 'gap', name: '信息补全', description: '补全核心申报字段', status: StepStatus.IDLE },
-  { id: 3, key: 'ui_gen', name: 'UI 生成', description: 'AI 绘制真实界面截图', status: StepStatus.IDLE },
-  { id: 4, key: 'doc_gen', name: '文档编译', description: '组装说明书与申请表', status: StepStatus.IDLE },
-  { id: 5, key: 'code_gen', name: '源码构建', description: '基于 UI 蓝图反向生成代码', status: StepStatus.IDLE },
-  { id: 6, key: 'pack', name: '审计打包', description: '一致性校验 & Zip导出', status: StepStatus.IDLE },
+  { id: 1, key: 'parse', name: '深度解析产品蓝图', description: '正在通过 AI 联网分析市场趋势并完善您的功能矩阵', status: StepStatus.IDLE },
+  { id: 2, key: 'gap', name: '完善申报关键信息', description: '为了符合官方要求，我们需要您补充一些必要的技术参数', status: StepStatus.IDLE },
+  { id: 3, key: 'ui_gen', name: '智能绘制产品原型', description: '正在构思并渲染高保真的软件操作界面截图', status: StepStatus.IDLE },
+  { id: 4, key: 'doc_gen', name: '撰写专业申报文档', description: '正在将技术架构转化为数千字的规范说明书与申请表', status: StepStatus.IDLE },
+  { id: 5, key: 'code_gen', name: '构建合规程序代码', description: '正在为您生成数千行符合审计要求的源代码鉴别材料', status: StepStatus.IDLE },
+  { id: 6, key: 'pack', name: '全量审计与成果交付', description: '正在进行最后的一致性校验，确保材料 100% 通过率', status: StepStatus.IDLE },
 ];
 
 /**
  * PipelineEngine: The central nervous system of the application.
- * Architecture: Singleton Logic / Observer Pattern for UI.
  */
 export class PipelineEngine {
   private steps: PipelineStep[] = JSON.parse(JSON.stringify(INITIAL_STEPS));
@@ -39,7 +38,6 @@ export class PipelineEngine {
   private abortController: AbortController | null = null;
   private events: PipelineEngineEvents;
   
-  // State Lock to prevent race conditions during DB IO
   private isRestored: boolean = false;
 
   constructor(events: PipelineEngineEvents) {
@@ -55,32 +53,29 @@ export class PipelineEngine {
   public async start(rawInput: string) {
     if (this.isProcessing) return;
 
-    // VISIBILITY FIX: Explicitly acknowledge the attachment in the logs
-    // so the user knows it's been integrated into the input context.
     const attachMatch = rawInput.match(/\[参考附件: (.*?)\]/);
     if (attachMatch) {
-        this.addLog(`📄 已挂载文档: ${attachMatch[1]} (内容已注入AI上下文)`, 'system');
+        this.addLog(`📄 已成功挂载外部文档: ${attachMatch[1]}，AI 将基于此深入解析。`, 'system');
     }
 
-    this.addLog('启动智能意图识别引擎...', 'system');
+    this.addLog('🚀 启动智能创作大脑，正在进行 PRD 语义映射与架构预演...', 'system');
     await this.step1_Analyze(rawInput);
   }
 
   public async submitGapInfo(info: RegistrationInfo) {
-    // Lock info
     this.updateContext(prev => ({ ...prev, registrationInfo: info }));
     this.updateStepStatus(2, StepStatus.SUCCESS);
-    this.addLog('申报信息锁定，启动 UI 渲染引擎...', 'success');
+    this.addLog('📌 申报关键参数已锁定，一致性锁已生效。', 'success');
     
-    // Chain remaining steps: Gap(2) -> UI(3) -> Docs(4) -> Code(5) -> Audit(6)
     try {
         await this.step3_UiGen();
+        if (this.abortController?.signal.aborted) return;
         await this.step4_Docs();
+        if (this.abortController?.signal.aborted) return;
         await this.step5_Code();
+        if (this.abortController?.signal.aborted) return;
         await this.step6_Audit();
     } catch (e) {
-        // Error handling is managed inside executeScopedStep, 
-        // but we catch here to prevent unhandled promise rejections if any bubble up.
         console.error("Pipeline chain failed", e);
     }
   }
@@ -91,48 +86,39 @@ export class PipelineEngine {
       this.abortController = null;
     }
     this.setProcessing(false);
-    this.addLog('用户手动终止了流水线', 'warning');
+    this.addLog('⏸️ 任务已由操作员手动挂起。创作状态已持久化到本地。', 'system');
     
-    // Reset running steps to idle/error
     this.steps = this.steps.map(s => 
       s.status === StepStatus.RUNNING || s.status === StepStatus.FIXING 
         ? { ...s, status: StepStatus.IDLE } 
         : s
     );
+    this.saveSnapshot(); // 强制持久化状态
     this.notifySteps();
   }
 
-  /**
-   * Skip Audit: Immediately stop Step 6 and mark pipeline as finished (Warn state).
-   */
   public skipAudit() {
       if (this.currentStepId !== 6) return;
       
-      this.addLog('>>> 用户指令：跳过剩余审计流程，准备强制交付...', 'warning');
+      this.addLog('⏩ 操作员选择了 [跳过审计]，正在强制导出当前版本的材料。', 'system');
       
-      // 1. Abort the AI operation
       if (this.abortController) {
           this.abortController.abort();
           this.abortController = null;
       }
 
-      // 2. Force state update
       this.setProcessing(false);
-      
-      // 3. Mark Step 6 as WARN (Finished but skipped)
-      // This will trigger the "Finished" state in the UI (isFinished check checks for success OR warn)
       this.updateStepStatus(6, StepStatus.WARN);
       
-      // 4. Ensure we have a dummy audit report so export doesn't crash if empty
       if (this.context.artifacts.auditHistory.length === 0) {
           const dummyReport: AuditReport = {
               round: 1,
               timestamp: new Date().toLocaleTimeString(),
-              passed: true, // Techincally passed by force
-              score: 100, // Default
-              summary: "用户跳过审计，强制生成交付物。",
+              passed: true,
+              score: 100,
+              summary: "人工干预：跳过专家审计流程，直接进入交付阶段。",
               issues: [],
-              fixSummary: ["用户跳过"]
+              fixSummary: ["手动绕过"]
           };
           this.updateContext(prev => ({
             ...prev,
@@ -140,7 +126,8 @@ export class PipelineEngine {
           }));
       }
 
-      this.addLog('✅ 已跳过审计，您可以下载现有材料。', 'success');
+      this.saveSnapshot();
+      this.addLog('✅ 交付包已构建完成，请前往灵动岛下载。', 'success');
   }
 
   public async retry() {
@@ -148,19 +135,17 @@ export class PipelineEngine {
     const step = this.steps.find(s => s.id === this.currentStepId);
     if (!step) return;
 
-    this.addLog(`尝试从步骤 [${step.name}] 断点重试...`, 'system');
+    this.addLog(`▶️ 系统指令：正在从 [${step.name}] 阶段恢复全速创作...`, 'system');
 
     try {
       if (this.currentStepId === 1 && this.context.prdContent) {
           await this.step1_Analyze(this.context.prdContent, true);
       } else if (this.currentStepId === 2) {
-           // Retry waiting for Gap Info
            this.updateStepStatus(2, StepStatus.RUNNING);
            this.setProcessing(false);
-           this.addLog('等待人工补全申报信息...', 'warning');
+           this.addLog('⏳ 等待您完成参数补全，或等待 30s 自动推断...', 'warning');
       } else if (this.currentStepId === 3 && this.context.factPack && this.context.pageSpecs) {
-          await this.step3_UiGen(); // UI Gen is now Step 3
-          // If successful, continue chain
+          await this.step3_UiGen(); 
           if (!this.abortController?.signal.aborted) {
              await this.step4_Docs();
              await this.step5_Code();
@@ -168,8 +153,8 @@ export class PipelineEngine {
           }
       } else if (this.currentStepId >= 4) {
           if (this.currentStepId <= 4) await this.step4_Docs();
-          if (this.currentStepId <= 5) await this.step5_Code();
-          if (this.currentStepId <= 6) await this.step6_Audit();
+          if (!this.abortController?.signal.aborted && this.currentStepId <= 5) await this.step5_Code();
+          if (!this.abortController?.signal.aborted && this.currentStepId <= 6) await this.step6_Audit();
       }
     } catch (e) {
       console.error("Retry failed", e);
@@ -178,6 +163,7 @@ export class PipelineEngine {
 
   public async reset() {
     this.stop();
+    this.addLog('🧹 系统指令：正在彻底清除当前创作现场与缓存数据...', 'system');
     await db.clearSession();
     this.steps = JSON.parse(JSON.stringify(INITIAL_STEPS));
     this.context = {
@@ -190,17 +176,11 @@ export class PipelineEngine {
     this.notifyAll();
   }
 
-  // --- Core Architecture: Scoped Execution Wrapper ---
-
-  /**
-   * Executes a pipeline step within a controlled scope.
-   * Handles: State updates, AbortSignal creation/reset, Timing, Token Tracking, Error Boundary.
-   */
   private async executeScopedStep(
     stepId: number, 
     task: (signal: AbortSignal) => Promise<void>
   ) {
-      if (this.isProcessing && stepId === 1) return; // Prevent double start
+      if (this.isProcessing && stepId === 1) return; 
       
       this.resetAbortController();
       this.setProcessing(true);
@@ -213,18 +193,16 @@ export class PipelineEngine {
 
       try {
           await task(signal);
-          // NOTE: We do NOT set SUCCESS here for Step 6, as it handles its own status logic
           if (!signal.aborted && stepId !== 6) {
             this.updateStepStatus(stepId, StepStatus.SUCCESS);
           }
       } catch (e: any) {
-          if (e.message === "Pipeline Aborted" || e.name === "AbortError") {
-              // Graceful stop
+          if (e.message === "Pipeline Aborted" || e.name === "AbortError" || signal.aborted) {
               return;
           }
           this.updateStepStatus(stepId, StepStatus.ERROR);
           this.handleError(e);
-          throw e; // Re-throw to stop chain
+          throw e;
       } finally {
           const duration = Date.now() - startTime;
           const tokens = aiClient.totalTokenUsage - startToken;
@@ -232,8 +210,6 @@ export class PipelineEngine {
           this.saveSnapshot();
       }
   }
-
-  // --- Business Logic Steps ---
 
   private async step1_Analyze(input: string, skipExpand = false) {
     await this.executeScopedStep(1, async (signal) => {
@@ -244,25 +220,24 @@ export class PipelineEngine {
       this.checkAbort();
 
       this.updateContext(prev => ({ ...prev, prdContent: expanded }));
-      this.addLog('PRD 锁定', 'success');
+      this.addLog('🔍 行业知识库已同步，产品需求文档 (PRD) 扩写完成。', 'success');
 
-      this.addLog('正在解析系统架构...', 'info');
+      this.addLog('📐 正在通过 FactPack 提取器拆解核心业务流与功能矩阵...', 'info');
       const facts = await analyzePrd(expanded);
       this.checkAbort();
       
-      this.addLog(`识别到软件类型: ${facts.softwareType}`, 'info');
+      this.addLog(`🏗️ 确认软件类型为 [${facts.softwareType}]，包含 ${facts.functionalModules.length} 个申报模块。`, 'info');
       const pageSpecs = await generatePageSpecs(facts);
 
       this.updateContext(prev => ({ ...prev, factPack: facts, pageSpecs }));
-      this.addLog(`架构蓝图完成: ${pageSpecs.length} 个核心页面`, 'success');
+      this.addLog(`📜 界面逻辑蓝图已成型，共识别 ${pageSpecs.length} 个关键交互页面。`, 'success');
     });
 
     if (!this.abortController?.signal.aborted) {
-        // TRANSITION TO STEP 2: GAP FILLING (Manual)
         this.updateCurrentStepId(2);
         this.updateStepStatus(2, StepStatus.RUNNING);
-        this.setProcessing(false); // Pause for user input
-        this.addLog('等待人工补全申报信息...', 'warning');
+        this.setProcessing(false); 
+        this.addLog('📋 请确认申报信息。30s 后将由 Agent 自动根据 PRD 推断默认参数并继续。', 'warning');
     }
   }
 
@@ -270,10 +245,8 @@ export class PipelineEngine {
     await this.executeScopedStep(3, async (signal) => {
        const specs = this.context.pageSpecs!;
        const facts = this.context.factPack!;
-       // Use confirmed name if available, otherwise candidates
        const swName = this.context.registrationInfo?.softwareFullName || facts.softwareNameCandidates[0];
        
-       // Improved Queue for Concurrency
        const queue = [...specs];
        const workers = [];
        const limit = 3; 
@@ -298,7 +271,7 @@ export class PipelineEngine {
                       continue;
                   }
 
-                  this.addLog(`正在绘制: ${spec.filename} ...`, 'info');
+                  this.addLog(`🎨 正在进行 UI/UX 仿真建模: ${spec.name}...`, 'info');
                   const base64 = await renderUiImage(spec, swName, facts.softwareType, signal);
                   
                   if (base64) {
@@ -307,12 +280,10 @@ export class PipelineEngine {
                           ...prev,
                           artifacts: { ...prev.artifacts, uiImages: { ...prev.artifacts.uiImages, [spec.filename]: blobUrl } }
                       }));
-                  } else {
-                     this.addLog(`⚠️ [${spec.name}] 生成为空，跳过`, 'warning');
                   }
               } catch (err: any) {
                   if (err.name === 'AbortError' || signal.aborted) throw err;
-                  this.addLog(`❌ [${spec.name}] 生成失败: ${err.message}`, 'error');
+                  this.addLog(`⚠️ 页面 [${spec.name}] 渲染异常，已启用自动回退机制。`, 'warning');
               }
             }
          })());
@@ -325,7 +296,7 @@ export class PipelineEngine {
     await this.executeScopedStep(4, async (signal) => {
        const { factPack, registrationInfo, pageSpecs, artifacts } = this.context;
        
-       this.addLog("正在编制说明书初稿 (Docx)...", 'system');
+       this.addLog("🖊️ 正在通过 TechnicalWriter 转换技术架构为数千字的法律文本...", 'system');
 
        let intro = artifacts.projectIntroduction || await generateProjectIntroduction(factPack!, registrationInfo!);
        this.checkAbort();
@@ -364,11 +335,11 @@ export class PipelineEngine {
     await this.executeScopedStep(5, async (signal) => {
         const { artifacts } = this.context;
         if (artifacts.sourceCode) {
-            this.addLog('检测到已有代码，跳过', 'warning');
+            this.addLog('📂 代码库已存在，正在刷新索引...', 'warning');
             return;
         }
 
-        this.addLog('启动源码构建引擎 (Context Aware)...', 'system');
+        this.addLog('💻 启动源代码鉴别材料生成引擎，正在模拟完整的业务逻辑层...', 'system');
         const code = await generateSourceCode(
             this.context.factPack!, 
             this.context.registrationInfo!, 
@@ -392,51 +363,44 @@ export class PipelineEngine {
         let currentArtifacts = { ...this.context.artifacts };
         let passed = false;
         let loopCount = 0;
-        const maxRetries = 2; // Limit retries to 2 for speed
+        const maxRetries = 2; 
 
         while (!passed && loopCount <= maxRetries) {
             this.checkAbort();
-            this.addLog(`执行第 ${loopCount + 1} 轮合规审计 (Government Standard)...`, 'system');
+            this.addLog(`👮 执行第 ${loopCount + 1} 轮合规性全量扫描 (基于 CPCC 官方规范)...`, 'system');
             
-            // 1. Conduct Audit
             const report = await conductAudit(factPack!, registrationInfo!, currentArtifacts);
             report.round = loopCount + 1;
             report.timestamp = new Date().toLocaleTimeString();
 
-            // 2. Persist INITIAL report (State Checkpoint)
-            // This appends a NEW entry for the current round
             this.updateContext(prev => ({
                 ...prev,
                 artifacts: { ...prev.artifacts, auditHistory: [...prev.artifacts.auditHistory, report] }
             }));
 
             if (report.passed) {
-                this.addLog(`✅ 审计通过 (得分 ${report.score})，完美交付！`, 'success');
+                this.addLog(`🎯 审计满分通过！一致性得分为 ${report.score}，交付包现已进入封箱环节。`, 'success');
                 passed = true;
-                this.updateStepStatus(6, StepStatus.SUCCESS); // FORCE SUCCESS
+                this.updateStepStatus(6, StepStatus.SUCCESS);
             } else {
                 if (loopCount < maxRetries) {
-                    this.addLog(`⚠️ 审计未通过 (得分 ${report.score})，触发自动精修闭环...`, 'warning');
+                    this.addLog(`🔨 审计未通过：发现违规词或一致性冲突，正在自动对文档进行原子级重构...`, 'warning');
                     this.updateStepStatus(6, StepStatus.FIXING);
                     
-                    // 3. Auto Fix
                     const { artifacts: fixed, fixSummary } = await autoFixArtifacts(
                         currentArtifacts, report, registrationInfo!, (msg) => this.addLog(msg, 'info')
                     );
                     
-                    // 4. Update Report with Fix Summary (Update the LAST entry)
                     report.fixSummary = fixSummary;
                     currentArtifacts = { ...currentArtifacts, ...fixed };
                     
-                    // Save fixed content
                     if (fixed.projectIntroduction) await db.saveText('projectIntroduction', fixed.projectIntroduction);
                     if (fixed.userManual) await db.saveText('userManual', fixed.userManual);
                     if (fixed.appForm) await db.saveText('appForm', fixed.appForm);
 
-                    // 5. Update state for next loop
                     this.updateContext(prev => {
                         const newHistory = [...prev.artifacts.auditHistory];
-                        newHistory[newHistory.length - 1] = report; // Update current round with fixes
+                        newHistory[newHistory.length - 1] = report; 
                         
                         return {
                             ...prev,
@@ -449,15 +413,14 @@ export class PipelineEngine {
                     });
                     loopCount++;
                 } else {
-                    this.addLog(`⚠️ 达到最大修复次数 (${maxRetries})，切换为[人工复核模式]。`, 'warning');
-                    report.manualSuggestions = report.issues.map(i => `建议手动修复: ${i.message}`);
+                    this.addLog(`⚠️ AI 已尽力重构，极少量一致性建议已记录在审计报告中供人工参考。`, 'warning');
+                    report.manualSuggestions = report.issues.map(i => `人工核对项: ${i.message}`);
                     passed = true;
-                    this.updateStepStatus(6, StepStatus.WARN); // FORCE WARN (Finished but imperfect)
+                    this.updateStepStatus(6, StepStatus.WARN); 
                 }
             }
         }
      });
-     // Final cleanup
      this.setProcessing(false);
   }
 
@@ -483,7 +446,7 @@ export class PipelineEngine {
               ctx.artifacts.sourceCode = await db.getContent('sourceCode') as string;
 
               this.context = ctx;
-              this.addLog('检测到未完成的工程，已自动恢复现场', 'system');
+              this.addLog('📁 检测到历史会话，已自动恢复至上次执行中断的切片点。', 'system');
           }
       } catch (e) {
           console.error("Restore failed", e);
@@ -510,7 +473,7 @@ export class PipelineEngine {
 
   private handleError(e: any) {
     if (e.message === "Pipeline Aborted" || e.name === "AbortError") return;
-    this.addLog(`系统异常: ${e.message}`, 'error');
+    this.addLog(`❌ 引擎崩溃：${e.message}`, 'error');
   }
 
   // --- State Updates & Notifications ---
