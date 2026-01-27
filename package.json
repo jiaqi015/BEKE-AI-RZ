@@ -8,9 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^0.1.2",
+    "@google/genai": "^0.2.1",
     "dexie": "^3.2.4",
-    "docx": "^8.5.0",
+    "docx": "^9.5.1",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "pdfjs-dist": "^3.11.174",
