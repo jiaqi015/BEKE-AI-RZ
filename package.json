@@ -8,12 +8,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "1.38.0",
+    "@google/genai": "latest",
     "dexie": "4.2.1",
     "docx": "9.5.1",
     "file-saver": "2.0.5",
     "jszip": "3.10.1",
-    "pdfjs-dist": "5.4.530",
+    "pdfjs-dist": "4.5.136",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
