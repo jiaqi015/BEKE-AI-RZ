@@ -1,21 +1,26 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from "pdfjs-dist";
 
-// 处理 Vite/Webpack 环境下的 ESM 默认导出兼容性问题
-const pdfjs = (pdfjsLib as any).default || pdfjsLib;
+// 【CRITICAL FIX】
+// PDF.js 5.x uses ES Modules (.mjs). The worker file in node_modules is "pdf.worker.mjs".
+// We use Vite's asset URL resolution to bundle the local worker file.
+// This ensures the worker version matches the installed npm package version (5.4.530).
 
-// 【核心修复】强制锁定版本，不再依赖运行时检测
-// 必须与 package.json 中的 pdfjs-dist 版本严格一致
-const EXACT_VERSION = '3.11.174';
-
-// Debug Log: 确认当前加载的库版本
-console.log(`[PDF Loader] Target Worker: ${EXACT_VERSION}, Loaded Lib Version: ${pdfjs.version}`);
-
-// 使用 CDN 加载 Worker，避免 Vite 构建时的复杂文件拷贝配置
-// 这一步确保了 Worker (线程) 与主线程 (npm 包) 版本 100% 匹配
-const WORKER_SRC = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${EXACT_VERSION}/pdf.worker.min.js`;
-
-if (pdfjs.GlobalWorkerOptions) {
-  pdfjs.GlobalWorkerOptions.workerSrc = WORKER_SRC;
+try {
+  // Check if import.meta.url is available (it should be in Vite/ESM)
+  // We use a conditional check to avoid "Invalid URL" TypeError if it's undefined in some environments.
+  const baseUrl = import.meta.url;
+  
+  if (baseUrl) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      "pdfjs-dist/build/pdf.worker.mjs",
+      baseUrl
+    ).toString();
+  } else {
+    // Should not happen in a valid Vite module environment
+    console.error("import.meta.url is missing");
+  }
+} catch (e) {
+  console.error("PDF Worker Configuration Failed:", e);
 }
 
 /**
@@ -26,10 +31,10 @@ export const readPdfText = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     
     // 加载 PDF 文档
-    const loadingTask = pdfjs.getDocument({ 
+    // 使用 Standard Font Data CDN (cMaps) - cMaps 纯数据文件通常跨小版本兼容
+    const loadingTask = pdfjsLib.getDocument({ 
         data: arrayBuffer,
-        // 同样强制使用对应版本的 CMap (字体映射)
-        cMapUrl: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${EXACT_VERSION}/cmaps/`,
+        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
         cMapPacked: true,
     });
     
@@ -52,12 +57,8 @@ export const readPdfText = async (file: File): Promise<string> => {
     console.error("PDF Parsing Error:", error);
     const msg = error.message || "Unknown error";
     
-    // 友好的错误提示
-    if (msg.includes("version") && msg.includes("match")) {
-       throw new Error(`PDF 版本冲突: 检测到库版本为 ${pdfjs.version}，但 Worker 需要 ${EXACT_VERSION}。请确保 index.html 中没有 importmap 干扰。`);
-    }
-    if (msg.includes("Worker") || msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
-        throw new Error("PDF 组件加载失败: 请检查网络连接 (需要访问 cdnjs.cloudflare.com)");
+    if (msg.includes("Worker") || msg.includes("version") || msg.includes("Invalid URL")) {
+        throw new Error("PDF环境版本不一致 (Worker Mismatch)。请执行: rm -rf node_modules && npm install && npm run build");
     }
     throw new Error(`PDF 解析失败: ${msg}`);
   }
