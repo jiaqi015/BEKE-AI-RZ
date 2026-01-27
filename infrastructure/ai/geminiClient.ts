@@ -2,17 +2,20 @@
 import { GoogleGenAI, Type, Schema, Tool } from "@google/genai";
 
 class GeminiClient {
-  private ai: GoogleGenAI;
-  // User requested "All Gemini 3 Pro" for maximum capability.
-  // We map the 'Flash' slot to Pro as well to ensure even "fast" tasks use the smartest model.
-  private modelFlash = 'gemini-3-pro-preview'; 
+  // Use pro-preview for complex reasoning/coding tasks
   private modelPro = 'gemini-3-pro-preview';
+  // Use pro-image-preview for image generation and tasks requiring search grounding
   private modelImage = 'gemini-3-pro-image-preview';
   
   private _totalTokenUsage = 0;
 
-  constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  constructor() {}
+
+  /**
+   * Always create a new instance before a call to ensure the latest API key from the environment/dialog is used.
+   */
+  private getAI() {
+    return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   }
 
   get totalTokenUsage() {
@@ -27,25 +30,27 @@ class GeminiClient {
 
   /**
    * Robust Retry Wrapper
-   * Handles 429/503 but respects AbortSignal (AbortError).
    */
   private async withRetry<T>(operation: () => Promise<T>, signal?: AbortSignal, retries = 3, delay = 1000): Promise<T> {
       try {
           if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
           return await operation();
       } catch (error: any) {
-          // NEVE RETRY an aborted request
           if (error.name === 'AbortError' || signal?.aborted) {
               throw error;
           }
 
+          // Handle "Requested entity was not found" by signaling a key reset might be needed
+          if (error.message?.includes("Requested entity was not found")) {
+              console.error("API Key error detected. Resetting session might be required.");
+          }
+
           if (retries <= 0) throw error;
           
-          const isRetryable = error.status === 503 || error.status === 429 || error.message?.includes('fetch') || error.message?.includes('network');
+          const isRetryable = error.status === 503 || error.status === 429 || error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('xhr');
           
           if (isRetryable) {
-              console.warn(`Gemini API Busy. Retrying in ${delay}ms... (${retries} left)`);
-              // Wait with abort check
+              console.warn(`Gemini API error (xhr/network/busy). Retrying in ${delay}ms... (${retries} left)`);
               await new Promise((res, rej) => {
                   const timer = setTimeout(() => {
                       signal?.removeEventListener('abort', onAbort);
@@ -66,16 +71,15 @@ class GeminiClient {
 
   async generateTextWithSearch(prompt: string, signal?: AbortSignal): Promise<{ text: string, sources: string[] }> {
     return this.withRetry(async () => {
+        const ai = this.getAI();
         const tools: Tool[] = [{ googleSearch: {} }];
         
-        // @ts-ignore - The SDK types might not fully support signal yet in all signatures, but fetch underlying does.
-        // We handle the abort check in the wrapper mostly.
-        const response = await this.ai.models.generateContent({
-            model: this.modelPro,
+        // Use gemini-3-pro-image-preview for search grounding tasks as per requirements
+        const response = await ai.models.generateContent({
+            model: this.modelImage,
             contents: prompt,
             config: {
                 tools: tools,
-                responseMimeType: "text/plain",
             }
         });
         
@@ -98,8 +102,9 @@ class GeminiClient {
 
   async generateStructured<T>(prompt: string, schema: Schema, usePro = true, signal?: AbortSignal): Promise<T> {
     return this.withRetry(async () => {
-        const response = await this.ai.models.generateContent({
-            model: usePro ? this.modelPro : this.modelFlash,
+        const ai = this.getAI();
+        const response = await ai.models.generateContent({
+            model: usePro ? this.modelPro : 'gemini-3-flash-preview',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -115,8 +120,9 @@ class GeminiClient {
 
   async generateText(prompt: string, usePro = true, signal?: AbortSignal): Promise<string> {
     return this.withRetry(async () => {
-        const response = await this.ai.models.generateContent({
-            model: usePro ? this.modelPro : this.modelFlash,
+        const ai = this.getAI();
+        const response = await ai.models.generateContent({
+            model: usePro ? this.modelPro : 'gemini-3-flash-preview',
             contents: prompt,
         });
         this.trackUsage(response);
@@ -129,11 +135,12 @@ class GeminiClient {
         try {
             if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
-            const response = await this.ai.models.generateContent({
+            const ai = this.getAI();
+            const response = await ai.models.generateContent({
                 model: this.modelImage,
                 contents: { parts: [{ text: prompt }] },
                 config: {
-                    imageConfig: { imageSize: "2K", aspectRatio: aspectRatio }
+                    imageConfig: { imageSize: "1K", aspectRatio: aspectRatio }
                 }
             });
             this.trackUsage(response);
@@ -148,7 +155,6 @@ class GeminiClient {
             throw new Error("No image data in response");
         } catch (error: any) {
             if (error.name === 'AbortError' || signal?.aborted) throw error;
-
             console.warn(`Image generation failed. Retries left: ${retryCount}. Error:`, error);
             if (retryCount > 0) {
                 await new Promise((res, rej) => {
