@@ -1,3 +1,4 @@
+
 {
   "name": "beke-ai-rz",
   "version": "1.0.0",
@@ -8,23 +9,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "latest",
+    "@google/genai": "1.38.0",
     "dexie": "4.2.1",
     "docx": "9.5.1",
     "file-saver": "2.0.5",
     "jszip": "3.10.1",
-    "pdfjs-dist": "4.5.136",
+    "pdfjs-dist": "5.4.530",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.7",
-    "@types/node": "^20.11.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "4.3.1",
-    "typescript": "^5.5.3",
-    "vite": "5.4.1"
+    "@types/file-saver": "2.0.7",
+    "@types/node": "20.11.0",
+    "@types/react": "19.0.8",
+    "@types/react-dom": "19.0.3",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.7.3",
+    "vite": "6.0.11"
   },
   "engines": {
     "node": "20.x"
