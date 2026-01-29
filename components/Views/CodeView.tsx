@@ -45,9 +45,9 @@ export const CodeView: React.FC<Props> = ({ context, currentStepId }) => {
                          </div>
                      </div>
                      <div className="mt-2 text-[10px] text-green-600 font-mono">
-                         > Generating Module: Controller... OK<br/>
-                         > Generating Module: Service... OK<br/>
-                         > Generating Module: DAO... PENDING
+                         &gt; Generating Module: Controller... OK<br/>
+                         &gt; Generating Module: Service... OK<br/>
+                         &gt; Generating Module: DAO... PENDING
                      </div>
                 </div>
             </div>
