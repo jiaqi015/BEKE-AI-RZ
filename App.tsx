@@ -231,6 +231,7 @@ const App: React.FC = () => {
   const removeAttachment = () => setAttachedFile(null);
   const handleStop = () => { if (window.confirm("确定要暂停当前的创作任务吗？")) stopProcessing(); };
   const handleSkipAuditAction = () => { if (window.confirm("确定跳过审计，直接生成现有材料吗？")) skipAudit(); };
+  
   const handleReset = () => {
       if (window.confirm("确定要放弃当前进度并回到首页吗？")) {
           resetPipeline();
@@ -239,6 +240,16 @@ const App: React.FC = () => {
           setActiveTab('plan');
       }
   };
+
+  const handleFinishedReset = () => {
+      if (window.confirm("请确认已下载交付物。确定要结束当前任务并返回首页吗？")) {
+          resetPipeline();
+          setInputPrd('');
+          setAttachedFile(null);
+          setActiveTab('plan');
+      }
+  };
+
   const handleExportClick = () => setIsExportModalOpen(true);
 
   if (hasApiKey === false) {
@@ -510,10 +521,16 @@ const App: React.FC = () => {
                         )}
 
                         {isFinished && (
-                            <button onClick={handleExportClick} className="px-5 py-2 rounded-full bg-white text-black hover:bg-zinc-200 text-[10px] font-bold transition-all shadow-lg flex items-center gap-2">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                下载交付包
-                            </button>
+                            <>
+                                <button onClick={handleFinishedReset} className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-[10px] font-bold transition-all shadow-lg flex items-center gap-2 border border-white/5">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                    回到首页
+                                </button>
+                                <button onClick={handleExportClick} className="px-5 py-2 rounded-full bg-white text-black hover:bg-zinc-200 text-[10px] font-bold transition-all shadow-lg flex items-center gap-2">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                    下载交付包
+                                </button>
+                            </>
                         )}
 
                         {currentStepId === 6 && (isProcessing || isStopped) && (
