@@ -52,7 +52,7 @@ export const generateSourceCode = async (
       const formattedBlock = numberedLines.join('\n') + "\n";
       accumulatedCode += formattedBlock;
       // Incremental save to DB to prevent data loss
-      await db.saveText('sourceCode', accumulatedCode);
+      await db.saveArtifact('sourceCode', accumulatedCode);
   };
 
   // --- PHASE 1: BOILERPLATE EXPLOSION (Core Infra) ---

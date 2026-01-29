@@ -58,12 +58,12 @@ const GapFiller: React.FC<Props> = ({ factPack, onSubmit }) => {
 
   const InputField = ({ label, value, onChange, required = false, type = "text", placeholder = "" }: any) => (
     <div className="space-y-1.5">
-      <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider ml-1">{label} {required && <span className="text-rose-400">*</span>}</label>
+      <label className="block text-[10px] font-semibold text-zinc-300 uppercase tracking-wider ml-1">{label} {required && <span className="text-rose-400">*</span>}</label>
       <input 
         type={type}
         required={required}
         placeholder={placeholder}
-        className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all placeholder-zinc-600 hover:bg-black/30 backdrop-blur-sm"
+        className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all placeholder-zinc-400 hover:bg-black/30 backdrop-blur-sm"
         value={value}
         onChange={e => onChange(e.target.value)}
       />
@@ -87,7 +87,7 @@ const GapFiller: React.FC<Props> = ({ factPack, onSubmit }) => {
 
     return (
       <div className="space-y-2">
-        <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider ml-1">{label} {required && <span className="text-rose-400">*</span>}</label>
+        <label className="block text-[10px] font-semibold text-zinc-300 uppercase tracking-wider ml-1">{label} {required && <span className="text-rose-400">*</span>}</label>
         
         <div className="flex flex-wrap gap-2 mb-2 p-1">
           {values.map(tag => (
@@ -106,7 +106,7 @@ const GapFiller: React.FC<Props> = ({ factPack, onSubmit }) => {
 
         <input 
           type="text"
-          className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all placeholder-zinc-600 backdrop-blur-sm"
+          className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm text-white focus:ring-2 focus:ring-blue-500/50 focus:border-transparent outline-none transition-all placeholder-zinc-400 backdrop-blur-sm"
           placeholder="输入并回车添加..."
           value={inputValue}
           onKeyDown={(e) => {
@@ -150,7 +150,7 @@ const GapFiller: React.FC<Props> = ({ factPack, onSubmit }) => {
         </div>
         <div>
             <h3 className="text-base font-bold text-white tracking-tight">缺失信息补全</h3>
-            <p className="text-[10px] text-zinc-400">请补充官方申请表必需字段</p>
+            <p className="text-[10px] text-zinc-300">请补充官方申请表必需字段</p>
         </div>
       </div>
       

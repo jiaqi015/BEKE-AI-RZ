@@ -73,6 +73,7 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   // 随机 Tip 状态
   const [currentTip, setCurrentTip] = useState(LITERARY_TIPS[0]);
@@ -155,7 +156,7 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
       {/* 头部状态条 */}
       <div className={`px-5 py-4 flex items-center justify-between z-10 border-b backdrop-blur-xl ${isDark ? 'border-white/5 bg-black/60' : 'border-black/5 bg-white/60'}`}>
         <div className="flex items-center gap-3">
-          <span className={`font-black tracking-[0.2em] text-[10px] uppercase ${isDark ? 'text-zinc-500' : 'text-gray-400'}`}>智慧写作执行记录</span>
+          <span className={`font-black tracking-[0.2em] text-[10px] uppercase ${isDark ? 'text-zinc-200' : 'text-gray-400'}`}>智慧写作执行记录</span>
         </div>
         
         {/* 文艺冷幽默 Tips 区域 - 🤡 在说一样 */}
@@ -165,7 +166,7 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
            }`}>
                <span className="text-sm shrink-0 grayscale hover:grayscale-0 transition-all duration-500 select-none">🤡</span>
                <span className={`text-[10px] font-medium leading-normal italic transition-all duration-700 ${
-                 isDark ? 'text-zinc-400' : 'text-gray-500'
+                 isDark ? 'text-zinc-300' : 'text-gray-500'
                } truncate md:whitespace-normal`}>
                  {currentTip}
                </span>
@@ -178,7 +179,7 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
         {logGroups.length === 0 && (
            <div className="h-full flex flex-col items-center justify-center opacity-30 select-none animate-pulse">
              <div className={`w-16 h-16 border-2 border-dashed rounded-3xl animate-spin duration-[15s] mb-4 ${isDark ? 'border-zinc-700' : 'border-gray-200'}`}></div>
-             <p className={`text-[10px] tracking-[0.4em] font-black uppercase ${isDark ? 'text-zinc-500' : 'text-gray-400'}`}>待机中 - 等待任务指令</p>
+             <p className={`text-[10px] tracking-[0.4em] font-black uppercase ${isDark ? 'text-zinc-400' : 'text-gray-400'}`}>待机中 - 等待任务指令</p>
            </div>
         )}
         
@@ -195,11 +196,11 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
               >
                 <div className="flex items-center gap-3">
                   <span className={`transition-transform duration-500 ease-out ${expandedGroups[group.id] ? 'rotate-90' : ''}`}>
-                    <svg className={`w-3.5 h-3.5 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                    <svg className={`w-3.5 h-3.5 ${isDark ? 'text-zinc-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                   </span>
                   <div className="flex items-center gap-3">
                     <span className={`text-[11px] font-black tracking-wide uppercase ${
-                      expandedGroups[group.id] ? (isDark ? 'text-zinc-200' : 'text-gray-900') : (isDark ? 'text-zinc-500' : 'text-gray-400')
+                      expandedGroups[group.id] ? (isDark ? 'text-zinc-100' : 'text-gray-900') : (isDark ? 'text-zinc-200' : 'text-gray-400')
                     }`}>
                       {group.stepName}
                     </span>
@@ -207,7 +208,7 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
                 </div>
                 
                 {!expandedGroups[group.id] && (
-                   <span className={`text-[9px] font-mono flex items-center gap-2 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
+                   <span className={`text-[9px] font-mono flex items-center gap-2 ${isDark ? 'text-zinc-400' : 'text-gray-400'}`}>
                      <span className={`px-1.5 py-0.5 rounded border ${isDark ? 'bg-white/5 border-white/5' : 'bg-black/5 border-black/5'}`}>{group.entries.length} 条记录</span>
                      <span>{group.entries[group.entries.length-1].timestamp}</span>
                    </span>
@@ -217,20 +218,35 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
               {expandedGroups[group.id] && (
                  <div className={`pl-6 space-y-2.5 border-l ml-4 animate-in slide-in-from-top-3 duration-500 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
                     {group.entries.map((log, lIdx) => (
-                       <div key={log.id} className="flex gap-4 group/line">
-                          <span className={`shrink-0 w-12 text-[9px] tabular-nums py-0.5 opacity-50 group-hover/line:opacity-100 transition-opacity ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
+                       <div key={log.id} className="flex gap-4 group/line items-start">
+                          <span className={`shrink-0 w-12 text-[9px] tabular-nums py-0.5 opacity-50 group-hover/line:opacity-100 transition-opacity ${isDark ? 'text-zinc-400' : 'text-gray-400'}`}>
                              {log.timestamp.split(':').slice(1).join(':')}
                           </span>
-                          <div className="flex-1 leading-relaxed">
+                          <div className="flex-1 leading-relaxed flex items-center gap-2 flex-wrap">
                              <span className={`
                                 ${log.type === 'system' ? (isDark ? 'text-blue-400 font-black' : 'text-blue-600 font-black') : 
                                   log.type === 'success' ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : 
                                   log.type === 'error' ? 'text-rose-500 font-black' : 
                                   log.type === 'warning' ? (isDark ? 'text-amber-400' : 'text-amber-600') : 
-                                  (isDark ? 'text-zinc-400' : 'text-gray-700')}
+                                  (isDark ? 'text-zinc-200' : 'text-gray-700')}
                              `}>
                                {log.message}
                              </span>
+                             
+                             {/* Preview Button for Images */}
+                             {log.metadata?.imageUrl && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewImage(log.metadata!.imageUrl!);
+                                  }}
+                                  className="px-1.5 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 text-[9px] border border-blue-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                                >
+                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                   预览
+                                </button>
+                             )}
+
                              {lIdx === group.entries.length - 1 && gIdx === logGroups.length - 1 && !group.isCompleted && (
                                 <span className="inline-block w-1.5 h-3.5 bg-blue-500 ml-2 animate-pulse align-middle shadow-[0_0_8px_#3b82f6]"></span>
                              )}
@@ -243,6 +259,21 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
         ))}
         <div ref={bottomRef} className="h-10" />
       </div>
+
+      {/* Image Preview Overlay */}
+      {previewImage && (
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200">
+           <div className="relative max-w-full max-h-full flex flex-col items-center">
+              <img src={previewImage} className="max-w-full max-h-[70vh] rounded-lg shadow-2xl border border-white/10" alt="Preview" />
+              <button 
+                 onClick={() => setPreviewImage(null)}
+                 className="mt-4 px-6 py-2 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2 text-xs"
+              >
+                关闭预览
+              </button>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

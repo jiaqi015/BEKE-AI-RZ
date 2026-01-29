@@ -86,7 +86,8 @@ class DocxCompiler {
     async compile(content: string, isSourceCode = false): Promise<Blob> {
         // Step 1: Analyze & Prefetch Assets (IO Bound)
         const imageKeys = this.scanImageKeys(content);
-        const imageAssets = await db.getBatchContent(imageKeys);
+        // Updated to use the new Repository method
+        const imageAssets = await db.getBatchArtifacts(imageKeys);
 
         // Step 2: Parse & Render (CPU Bound)
         const lines = content.split('\n');
@@ -235,7 +236,7 @@ export class ExportPipeline {
     async run(onEvent: (e: ExportEvent) => void) {
         try {
             // Phase 1: Init
-            onEvent({ step: 'INIT', message: '初始化交付环境...', progress: 5, detail: 'Connecting to Local IndexedDB...' });
+            onEvent({ step: 'INIT', message: '初始化交付环境...', progress: 5, detail: 'Connecting to Local IndexedDB Repository...' });
             await yieldToMain();
             
             // Phase 2: Compile Docs (Serial execution for stability, but optimized internally)
@@ -257,9 +258,11 @@ export class ExportPipeline {
                 });
                 
                 // Fetch Content text
-                let content = await db.getContent(fileDef.key);
-                if (!content && typeof this.context.artifacts[fileDef.key as keyof Artifacts] === 'string') {
-                    content = this.context.artifacts[fileDef.key as keyof Artifacts] as string;
+                // Check in context first (RAM), if not, fallback to DB (Disk)
+                let content = this.context.artifacts[fileDef.key as keyof Artifacts];
+                if (!content || typeof content !== 'string') {
+                     const fromDb = await db.getArtifact(fileDef.key);
+                     if (typeof fromDb === 'string') content = fromDb;
                 }
 
                 if (content && typeof content === 'string') {
@@ -276,8 +279,8 @@ export class ExportPipeline {
             
             const imgFolder = this.root.folder("UI_原始截图");
             if (imgFolder && imageKeys.length > 0) {
-                // Batch fetch all raw images for archiving
-                const allImages = await db.getBatchContent(imageKeys);
+                // Batch fetch all raw images for archiving using new Repository method
+                const allImages = await db.getBatchArtifacts(imageKeys);
                 
                 let processedCount = 0;
                 for(const key of imageKeys) {

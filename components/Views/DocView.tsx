@@ -114,7 +114,7 @@ export const DocView: React.FC<Props> = ({ context, currentStepId }) => {
     }
     
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-600 space-y-4 opacity-60 select-none">
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-400 space-y-4 opacity-60 select-none">
         <span className="text-[10px] font-medium tracking-[0.2em] uppercase">文档编译中...</span>
       </div>
     );

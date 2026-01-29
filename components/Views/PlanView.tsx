@@ -59,7 +59,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
     }
     // Idle State
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-600 space-y-4 opacity-60 select-none">
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-300 space-y-4 opacity-60 select-none">
         <span className="text-[10px] font-medium tracking-[0.2em] uppercase">暂无规划数据</span>
       </div>
     );
@@ -79,7 +79,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
           <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
           AI 架构师设计思考
         </h3>
-        <p className="text-sm text-gray-700 dark:text-zinc-300 leading-relaxed font-serif italic">
+        <p className="text-sm text-gray-700 dark:text-zinc-200 leading-relaxed font-serif italic">
           "基于用户输入的PRD，系统识别到这是一个典型的 <strong>{factPack.softwareType}</strong> 架构。
           为了确保合规性，我已将其拆解为 <strong>{factPack.functionalModules.length}</strong> 个独立功能模块，
           并自动推导了 <strong>{factPack.roles.length}</strong> 类用户角色以丰富文档视角。
@@ -89,7 +89,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
 
       {/* 2. Business Flow Visualization */}
       <div className="bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/10 rounded-2xl p-6">
-        <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase mb-6 tracking-widest">
+        <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-300 uppercase mb-6 tracking-widest">
           核心业务流程泳道
         </h3>
         <div className="flex flex-wrap items-center gap-4">
@@ -99,7 +99,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
                 {step.trim()}
               </div>
               {i < factPack.businessFlow.split(/->|→/).length - 1 && (
-                <svg className="w-4 h-4 text-gray-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                <svg className="w-4 h-4 text-gray-300 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               )}
             </React.Fragment>
           ))}
@@ -110,7 +110,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Roles */}
         <div className="bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/10 rounded-2xl p-6">
-          <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase mb-4 tracking-widest">用户角色画像</h3>
+          <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-300 uppercase mb-4 tracking-widest">用户角色画像</h3>
           <div className="flex flex-wrap gap-2">
             {factPack.roles.map((role, i) => (
               <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-zinc-200">
@@ -124,10 +124,10 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
         {/* Tech Stack */}
         {registrationInfo && (
           <div className="bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/10 rounded-2xl p-6">
-            <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase mb-4 tracking-widest">技术栈推演</h3>
+            <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-300 uppercase mb-4 tracking-widest">技术栈推演</h3>
             <div className="flex flex-wrap gap-2">
               {registrationInfo.programmingLanguage.map((lang, i) => (
-                <span key={i} className="border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-[10px] font-mono text-gray-500 dark:text-zinc-400">
+                <span key={i} className="border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-[10px] font-mono text-gray-500 dark:text-zinc-300">
                   {lang}
                 </span>
               ))}
@@ -139,7 +139,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
       {/* 4. Page Specs (Original Content) */}
       {pageSpecs && (
         <div>
-          <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase mb-4 tracking-widest flex items-center gap-2">
+          <h3 className="text-xs font-bold text-gray-400 dark:text-zinc-300 uppercase mb-4 tracking-widest flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
             界面蓝图 ({pageSpecs.length})
           </h3>
@@ -151,7 +151,7 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
                     <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded uppercase tracking-wider group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">{p.id}</span>
                     <span className="text-sm text-gray-900 dark:text-zinc-100 font-bold">{p.name}</span>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{p.purpose}</span>
+                  <span className="text-xs text-gray-500 dark:text-zinc-300 line-clamp-2 leading-relaxed">{p.purpose}</span>
                 </div>
               </div>
             ))}

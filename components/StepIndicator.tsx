@@ -21,8 +21,8 @@ const StepIndicator: React.FC<Props> = ({ steps, currentStepId }) => {
         
         // 动态卡片样式
         let cardClasses = 'bg-transparent border border-transparent opacity-40 grayscale scale-[0.98]';
-        let titleColor = 'text-gray-400 dark:text-zinc-500';
-        let descColor = 'text-gray-300 dark:text-zinc-600';
+        let titleColor = 'text-gray-400 dark:text-zinc-300';
+        let descColor = 'text-gray-300 dark:text-zinc-400';
 
         if (isActive || isFixing) {
             cardClasses = 'bg-white/80 dark:bg-white/10 border border-blue-500/30 dark:border-white/20 shadow-xl backdrop-blur-xl scale-105 ring-1 ring-blue-500/20';

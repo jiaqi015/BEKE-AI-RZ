@@ -114,6 +114,9 @@ export interface LogEntry {
   timestamp: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error' | 'system';
+  metadata?: {
+    imageUrl?: string;
+  };
 }
 
 // New Interface for Engine Events

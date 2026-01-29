@@ -32,7 +32,7 @@ const TabButton: React.FC<{
     className={`relative px-4 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-300 flex items-center gap-2 z-10 ${
       active
         ? 'text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]'
-        : 'text-zinc-500 hover:text-zinc-300'
+        : 'text-zinc-300 hover:text-white'
     }`}
   >
     {active && (
@@ -261,7 +261,7 @@ const App: React.FC = () => {
            </div>
            <div className="space-y-4">
               <h1 className="text-2xl font-black text-white">激活核心大脑</h1>
-              <p className="text-sm text-zinc-400 leading-relaxed">请选择一个有效的 API 密钥，开启您的智能写作之旅。</p>
+              <p className="text-sm text-zinc-300 leading-relaxed">请选择一个有效的 API 密钥，开启您的智能写作之旅。</p>
            </div>
            <button onClick={handleOpenKeySelection} className="w-full py-4 bg-white text-black font-bold rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">
              立即激活
@@ -295,14 +295,14 @@ const App: React.FC = () => {
                 </div>
                 <div>
                    <div className="text-sm font-bold text-white leading-tight">陈新软 AI</div>
-                   <div className="text-[9px] font-medium text-zinc-500 mt-0.5 tracking-wider uppercase">陈新投资的 AI 软著</div>
+                   <div className="text-[9px] font-medium text-zinc-300 mt-0.5 tracking-wider uppercase">陈新投资的 AI 软著</div>
                 </div>
              </div>
         </div>
 
         {/* Steps */}
         <div className="p-6 pt-6 flex-1 overflow-y-auto custom-scrollbar">
-           <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
+           <h2 className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
              工作流状态
            </h2>
            <StepIndicator steps={steps} currentStepId={currentStepId} />
@@ -313,21 +313,21 @@ const App: React.FC = () => {
            {(globalStats.totalTime > 0 || isProcessing) ? (
                 <div className="space-y-3">
                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-500 font-medium">任务耗时</span>
-                        <div className="text-xs font-mono font-bold text-zinc-300">
+                        <span className="text-[10px] text-zinc-300 font-medium">任务耗时</span>
+                        <div className="text-xs font-mono font-bold text-zinc-200">
                           {globalStats.totalTime > 60000 ? (globalStats.totalTime/60000).toFixed(1) + 'm' : (globalStats.totalTime/1000).toFixed(0) + 's'}
                         </div>
                    </div>
                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-zinc-500 font-medium">Tokens</span>
-                      <div className="text-xs font-mono font-bold text-zinc-300">{(globalStats.totalTokens / 1000).toFixed(1)}k</div>
+                      <span className="text-[10px] text-zinc-300 font-medium">Tokens</span>
+                      <div className="text-xs font-mono font-bold text-zinc-200">{(globalStats.totalTokens / 1000).toFixed(1)}k</div>
                    </div>
                    <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden mt-1">
                        <div className={`h-full rounded-full transition-all duration-1000 ease-out bg-blue-600`} style={{ width: isFinished ? '100%' : `${Math.min(100, (globalStats.totalTime / ESTIMATED_TOTAL_MS) * 100)}%` }}></div>
                    </div>
                 </div>
            ) : (
-             <div className="text-[10px] text-zinc-600 text-center py-2">等待任务启动...</div>
+             <div className="text-[10px] text-zinc-500 text-center py-2">等待任务启动...</div>
            )}
         </div>
       </aside>
@@ -346,7 +346,7 @@ const App: React.FC = () => {
                         <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tight mb-3">
                             全球首个软著 Agent
                         </h1>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-200">
                             输入您的产品构想，AI 将自动编译全套申报材料 (代码、文档、申请表)
                         </p>
                     </div>
@@ -355,7 +355,7 @@ const App: React.FC = () => {
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-3xl opacity-20 group-hover:opacity-40 transition duration-1000 blur-lg"></div>
                         <div className="relative bg-[#0F0F11] border border-white/10 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/5">
                              <textarea
-                                className="w-full h-40 p-6 bg-transparent outline-none text-base text-zinc-200 placeholder-zinc-600 resize-none font-mono leading-relaxed custom-scrollbar"
+                                className="w-full h-40 p-6 bg-transparent outline-none text-base text-zinc-100 placeholder-zinc-400 resize-none font-mono leading-relaxed custom-scrollbar"
                                 placeholder={`> 在此输入需求描述...
 例如：我想要一个基于 AI 的家庭植物养护系统，可以通过摄像头识别植物状态，并自动控制浇水设备。包含用户 App 和管理后台。`}
                                 value={inputPrd}
@@ -378,7 +378,7 @@ const App: React.FC = () => {
                                    <button 
                                       onClick={() => fileInputRef.current?.click()}
                                       disabled={isReadingPdf}
-                                      className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-400 transition-colors flex items-center gap-2"
+                                      className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300 transition-colors flex items-center gap-2"
                                    >
                                       {isReadingPdf ? <span className="animate-spin">⟳</span> : <span>📄</span>}
                                       上传 PDF
@@ -386,7 +386,7 @@ const App: React.FC = () => {
                                    <button 
                                       onClick={handleSurpriseMe}
                                       disabled={isDreaming}
-                                      className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-400 transition-colors flex items-center gap-2"
+                                      className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300 transition-colors flex items-center gap-2"
                                    >
                                       <span>✨</span> 帮我想个点子
                                    </button>
@@ -405,16 +405,16 @@ const App: React.FC = () => {
                     <div className="mt-8 space-y-5 opacity-40 hover:opacity-100 transition-opacity duration-500">
                          <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 border border-white/5 rounded-xl bg-white/[0.01]">
-                                <div className="text-[10px] font-bold text-zinc-500 uppercase mb-1">PRO 模型驱动</div>
-                                <p className="text-xs text-zinc-400">基于 Google Gemini 3.0 Pro 的超长上下文语义分析。</p>
+                                <div className="text-[10px] font-bold text-zinc-300 uppercase mb-1">PRO 模型驱动</div>
+                                <p className="text-xs text-zinc-300">基于 Google Gemini 3.0 Pro 的超长上下文语义分析。</p>
                             </div>
                             <div className="p-4 border border-white/5 rounded-xl bg-white/[0.01]">
-                                <div className="text-[10px] font-bold text-zinc-500 uppercase mb-1">合规性校验</div>
-                                <p className="text-xs text-zinc-400">内置 CPCC 形式审查规则，自动规避 100+ 敏感词。</p>
+                                <div className="text-[10px] font-bold text-zinc-300 uppercase mb-1">合规性校验</div>
+                                <p className="text-xs text-zinc-300">内置 CPCC 形式审查规则，自动规避 100+ 敏感词。</p>
                             </div>
                         </div>
 
-                        <div className="text-[10px] text-red-500 text-center leading-relaxed">
+                        <div className="text-[10px] text-red-400 text-center leading-relaxed">
                             <p>使用需保持网络楼梯连接。本工具生成的软著材料仅供娱乐，请根据实际业务自行辨别并核对。</p>
                             <p>全程 AI 编写使用PRO模型，需要大约50分钟，耐心不断网挂机等待</p>
                         </div>
@@ -445,7 +445,7 @@ const App: React.FC = () => {
             <div className="flex-1 h-[60%] md:h-full bg-[#121214] flex flex-col relative">
                 {/* Tabs */}
                 <div className="h-14 border-b border-white/5 flex items-center justify-between px-6 bg-[#09090b]">
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">实时产物预览</span>
+                    <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">实时产物预览</span>
                     <div className="flex bg-black/50 p-1 rounded-lg border border-white/5">
                         <TabButton id="plan" label="架构规划" active={activeTab === 'plan'} notify={hasNewPlan} onClick={() => setActiveTab('plan')} />
                         <TabButton id="doc" label="申报文档" active={activeTab === 'doc'} notify={hasNewDoc} onClick={() => setActiveTab('doc')} />
@@ -478,7 +478,7 @@ const App: React.FC = () => {
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
                                 </span>
-                                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wide min-w-[60px]">{activeStep?.name || 'Processing'}</span>
+                                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide min-w-[60px]">{activeStep?.name || 'Processing'}</span>
                              </>
                         ) : isFinished ? (
                              <>
@@ -488,7 +488,7 @@ const App: React.FC = () => {
                         ) : (
                              <>
                                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wide">Paused</span>
+                                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide">Paused</span>
                              </>
                         )}
                     </div>
@@ -514,7 +514,7 @@ const App: React.FC = () => {
                                 <button onClick={retryPipeline} className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold transition-all shadow-lg shadow-blue-500/20">
                                     继续
                                 </button>
-                                <button onClick={handleReset} className="px-4 py-2 rounded-full hover:bg-rose-500/20 hover:text-rose-400 text-zinc-500 text-[10px] font-bold transition-colors">
+                                <button onClick={handleReset} className="px-4 py-2 rounded-full hover:bg-rose-500/20 hover:text-rose-400 text-zinc-400 text-[10px] font-bold transition-colors">
                                     重置
                                 </button>
                             </>

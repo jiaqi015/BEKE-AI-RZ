@@ -18,14 +18,14 @@ export const CodeView: React.FC<Props> = ({ context, currentStepId }) => {
                         <div className="w-3 h-3 rounded-full bg-[#FF5F56]"></div>
                         <div className="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
                         <div className="w-3 h-3 rounded-full bg-[#27C93F]"></div>
-                        <span className="ml-4 text-sm text-zinc-500 font-mono">Compiling...</span>
+                        <span className="ml-4 text-sm text-zinc-300 font-mono">Compiling...</span>
                     </div>
                 </div>
                 
                 <div className="p-6 font-mono text-xs space-y-1 opacity-70">
                     {[...Array(20)].map((_, i) => (
                         <div key={i} className="flex gap-4 animate-pulse" style={{ animationDelay: `${i * 50}ms`, opacity: 1 - i * 0.05 }}>
-                            <div className="w-8 text-zinc-600 text-right">{i+1}</div>
+                            <div className="w-8 text-zinc-300 text-right">{i+1}</div>
                             <div className="h-3 bg-zinc-700/50 rounded" style={{ width: `${Math.random() * 40 + 20}%` }}></div>
                         </div>
                     ))}
@@ -55,7 +55,7 @@ export const CodeView: React.FC<Props> = ({ context, currentStepId }) => {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-600 space-y-4 opacity-60 select-none">
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-300 space-y-4 opacity-60 select-none">
         <span className="text-[10px] font-medium tracking-[0.2em] uppercase">代码构建中...</span>
       </div>
     );
@@ -72,13 +72,13 @@ export const CodeView: React.FC<Props> = ({ context, currentStepId }) => {
           <div className="w-3 h-3 rounded-full bg-[#27C93F]"></div>
           <span className="ml-4 text-sm text-zinc-300 font-sans tracking-tight font-medium">SourceGenerator.java</span>
         </div>
-        <span className="text-xs text-zinc-500 font-mono">Ln {lines.length}, Col 1</span>
+        <span className="text-xs text-zinc-400 font-mono">Ln {lines.length}, Col 1</span>
       </div>
       <div className="flex-1 overflow-auto bg-[#1e1e1e] p-0 custom-scrollbar">
         <div className="flex flex-col min-h-full font-mono text-[13.5px] leading-7">
           {lines.map((line, idx) => (
             <div key={idx} className="flex hover:bg-[#2a2d2e] group/code transition-colors">
-              <div className="w-16 text-right pr-6 text-[#6e7681] select-none text-xs pt-[1px] group-hover/code:text-[#c6c6c6] bg-[#1e1e1e] border-r border-transparent group-hover/code:border-[#404040]">{idx + 1}</div>
+              <div className="w-16 text-right pr-6 text-[#858585] select-none text-xs pt-[1px] group-hover/code:text-[#c6c6c6] bg-[#1e1e1e] border-r border-transparent group-hover/code:border-[#404040]">{idx + 1}</div>
               <div className="flex-1 pl-6 text-[#d4d4d4] whitespace-pre tab-4">{line}</div>
             </div>
           ))}

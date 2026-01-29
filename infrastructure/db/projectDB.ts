@@ -1,87 +1,113 @@
 
 import Dexie, { Table } from 'dexie';
-import { PipelineContext, PipelineStep } from '../../types';
+import { PipelineContext, PipelineStep, LogEntry } from '../../types';
+
+// ==========================================
+// Data Models
+// ==========================================
 
 export interface FileRecord {
-  key: string;       // Unique ID
+  key: string;       
   content: Blob | string; 
   mimeType: string;
   createdAt: number;
 }
 
-export interface AppStateRecord {
+export interface SessionRecord {
   id: string; // 'current_session'
   steps: PipelineStep[];
   context: Partial<PipelineContext>; 
   currentStepId: number;
+  logs: LogEntry[]; // Persist logs to survive refresh
   updatedAt: number;
 }
 
+// ==========================================
+// Database Class (The Infrastructure)
+// ==========================================
+
 class ProjectDatabase extends Dexie {
   files!: Table<FileRecord>;
-  appState!: Table<AppStateRecord>;
+  session!: Table<SessionRecord>;
 
-  // Track active URLs to prevent memory leaks
-  private activeObjectUrls: Set<string> = new Set();
+  // Memory Management: Track active Object URLs to prevent leaks
+  private activeObjectUrls: Map<string, string> = new Map();
 
   constructor() {
     super('ChenXinSoftDB');
-    (this as any).version(1).stores({
+    (this as any).version(2).stores({ // Bump version for schema changes if any
       files: '&key, mimeType',
-      appState: '&id' 
+      session: '&id' 
     });
   }
 
+  // --- Resource Lifecycle Management ---
+
   /**
-   * Optimized: Uses browser's native fetch API to convert Base64 to Blob.
-   * This avoids blocking the main thread with heavy CPU loops (atob/charCodeAt).
+   * Creates a managed ObjectURL. 
+   * If a URL exists for this key, revoke it first to prevent leaks.
    */
-  async saveBase64Image(key: string, base64Data: string): Promise<string> {
+  public getManagedUrl(key: string, blob: Blob): string {
+      if (this.activeObjectUrls.has(key)) {
+          URL.revokeObjectURL(this.activeObjectUrls.get(key)!);
+      }
+      const url = URL.createObjectURL(blob);
+      this.activeObjectUrls.set(key, url);
+      return url;
+  }
+
+  public revokeAllUrls() {
+      this.activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
+      this.activeObjectUrls.clear();
+  }
+
+  // --- Repository Methods (Public API) ---
+
+  /**
+   * Smart save: Handles Base64 string or raw Blob automatically.
+   */
+  async saveArtifact(key: string, content: string | Blob, mimeType: string = 'text/plain'): Promise<string | null> {
     try {
-        // 1. Convert Base64 to Blob efficiently using Fetch API (Microtask)
-        // Add prefix if missing to make it a valid Data URI
-        const dataUri = base64Data.startsWith('data:') 
-            ? base64Data 
-            : `data:image/png;base64,${base64Data}`;
-            
-        const res = await fetch(dataUri);
-        const blob = await res.blob();
+        let blob: Blob;
         
-        // 2. Persist to IndexedDB
+        if (content instanceof Blob) {
+            blob = content;
+        } else if (mimeType.startsWith('image/') && typeof content === 'string') {
+            // Efficient Base64 -> Blob conversion via fetch (Microtask)
+            const dataUri = content.startsWith('data:') ? content : `data:${mimeType};base64,${content}`;
+            const res = await fetch(dataUri);
+            blob = await res.blob();
+        } else {
+            // Plain text
+            blob = new Blob([content], { type: mimeType });
+        }
+
         await this.files.put({
             key,
             content: blob,
-            mimeType: 'image/png',
+            mimeType,
             createdAt: Date.now()
         });
-        
-        // 3. Create URL for UI display
-        return this.createTrackedUrl(blob);
+
+        // If it's an image, return a displayable URL immediately
+        if (mimeType.startsWith('image/')) {
+            return this.getManagedUrl(key, blob);
+        }
+        return null;
     } catch (e) {
-        console.error("Failed to save image to DB", e);
-        throw new Error(`Image persistence failed: ${key}`);
+        console.error(`[DB] Failed to save artifact [${key}]`, e);
+        throw e;
     }
   }
 
-  async saveText(key: string, text: string) {
-    try {
-        await this.files.put({
-            key,
-            content: text,
-            mimeType: 'text/plain',
-            createdAt: Date.now()
-        });
-    } catch (e) {
-        console.error("DB Write Error", e);
-    }
-  }
-
-  async getContent(key: string): Promise<Blob | string | undefined> {
+  async getArtifact(key: string): Promise<Blob | string | undefined> {
     const record = await this.files.get(key);
+    // Return raw content (Blob or string)
+    // Legacy support: some old records might store string directly in content
     return record?.content;
   }
 
-  async getBatchContent(keys: string[]): Promise<Record<string, Blob | string>> {
+  async getBatchArtifacts(keys: string[]): Promise<Record<string, Blob | string>> {
       if (!keys || keys.length === 0) return {};
       const records = await this.files.bulkGet(keys);
       const result: Record<string, Blob | string> = {};
@@ -91,68 +117,68 @@ class ProjectDatabase extends Dexie {
       return result;
   }
 
-  async getAllImages(): Promise<Record<string, string>> {
-      // Clean up old URLs before loading new ones to avoid leaks
-      this.revokeAllUrls();
-
+  /**
+   * Rehydrates all image URLs from Blob storage.
+   * Call this on app start.
+   */
+  async hydrateImageUrls(): Promise<Record<string, string>> {
+      this.revokeAllUrls(); // Cleanup previous session
       const images: Record<string, string> = {};
-      const records = await this.files.where('mimeType').equals('image/png').toArray();
+      
+      const records = await this.files
+          .where('mimeType').startsWith('image/')
+          .toArray();
+          
       records.forEach(r => {
           if (r.content instanceof Blob) {
-              images[r.key] = this.createTrackedUrl(r.content);
+              images[r.key] = this.getManagedUrl(r.key, r.content);
           }
       });
       return images;
   }
 
-  async saveSession(steps: PipelineStep[], context: PipelineContext, currentStepId: number) {
-    // Optimization: Do not store large artifacts in session JSON state
-    // We only store the "Lightweight" state. Heavy assets live in 'files' table.
+  // --- Session Persistence ---
+
+  async saveSessionState(
+      steps: PipelineStep[], 
+      context: PipelineContext, 
+      currentStepId: number,
+      logs: LogEntry[]
+  ) {
+    // Light-weight context for DB (remove heavy artifacts)
     const contextToSave = {
         ...context,
         artifacts: {
             ...context.artifacts,
-            uiImages: {}, // Regenerated on load
-            sourceCode: undefined, 
-            appForm: undefined,
-            userManual: undefined
+            uiImages: {}, // Don't store URLs or Blobs in JSON, they are in 'files' table
+            // We keep text references (sourceCode, etc) if they are small, 
+            // but ideally we should only store keys. For now, keep text for simplicity.
         }
     };
 
     try {
-        await this.appState.put({
+        await this.session.put({
             id: 'current_session',
             steps,
             context: contextToSave,
             currentStepId,
+            logs, 
             updatedAt: Date.now()
         });
     } catch (e) {
-        console.warn("Session Auto-save failed", e);
+        console.warn("[DB] Session save failed", e);
     }
   }
 
-  async loadSession() {
-    return await this.appState.get('current_session');
+  async loadSession(): Promise<SessionRecord | undefined> {
+    return await this.session.get('current_session');
   }
 
   async clearSession() {
     this.revokeAllUrls();
-    await this.appState.delete('current_session');
+    await this.session.delete('current_session');
+    // We also clear files to ensure a fresh start
     await this.files.clear();
-  }
-
-  // --- Memory Management Helpers ---
-
-  private createTrackedUrl(blob: Blob): string {
-      const url = URL.createObjectURL(blob);
-      this.activeObjectUrls.add(url);
-      return url;
-  }
-
-  private revokeAllUrls() {
-      this.activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
-      this.activeObjectUrls.clear();
   }
 }
 

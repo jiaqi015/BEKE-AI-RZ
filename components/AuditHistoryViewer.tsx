@@ -8,9 +8,9 @@ interface Props {
 
 export const AuditHistoryViewer: React.FC<Props> = ({ history }) => {
   if (!history || history.length === 0) return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-zinc-500 animate-in fade-in zoom-in duration-500 select-none">
+      <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-zinc-300 animate-in fade-in zoom-in duration-500 select-none">
           <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-gray-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg className="w-8 h-8 text-gray-300 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
           <span className="text-xs font-mono uppercase tracking-widest opacity-80">等待审计引擎启动...</span>
       </div>
@@ -22,10 +22,10 @@ export const AuditHistoryViewer: React.FC<Props> = ({ history }) => {
        <div className="flex items-center justify-between mb-8 border-b border-gray-200 dark:border-white/10 pb-6">
            <div>
              <h2 className="text-2xl font-black dark:text-white text-gray-900 tracking-tight">质量演进全史</h2>
-             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 font-mono">Quality Evolution Timeline • {history.length} 轮迭代</p>
+             <p className="text-xs text-gray-500 dark:text-zinc-300 mt-1 font-mono">Quality Evolution Timeline • {history.length} 轮迭代</p>
            </div>
            <div className="text-right">
-              <div className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">当前评分</div>
+              <div className="text-xs font-bold text-gray-400 dark:text-zinc-400 uppercase tracking-wider mb-1">当前评分</div>
               <div className={`text-3xl font-black font-mono ${
                   history[history.length-1].score >= 90 ? 'text-emerald-500' : 'text-amber-500'
               }`}>
@@ -59,7 +59,7 @@ export const AuditHistoryViewer: React.FC<Props> = ({ history }) => {
                           
                           {/* Header Badge */}
                           <div className="flex items-center gap-3 mb-3">
-                              <span className="text-[10px] font-bold font-mono px-2 py-1 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-zinc-300 border border-gray-200 dark:border-white/5">
+                              <span className="text-[10px] font-bold font-mono px-2 py-1 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-zinc-200 border border-gray-200 dark:border-white/5">
                                   第 0{report.round} 轮
                               </span>
                               <span className="text-[10px] text-gray-400 font-mono">{report.timestamp}</span>
@@ -70,7 +70,7 @@ export const AuditHistoryViewer: React.FC<Props> = ({ history }) => {
                               
                               <div className="flex items-start justify-between mb-4">
                                   <div className="pr-4">
-                                      <h3 className="text-base font-bold dark:text-zinc-100 text-gray-800 leading-tight mb-2">
+                                      <h3 className="text-base font-bold dark:text-zinc-200 text-gray-800 leading-tight mb-2">
                                           {report.summary}
                                       </h3>
                                       <div className="flex flex-wrap gap-2">
