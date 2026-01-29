@@ -3,274 +3,373 @@ import { aiClient } from "../../infrastructure/ai/geminiClient";
 import { PageSpec } from "../../types";
 
 /**
- * UI 渲染引擎 (Visual Simulation Engine) - Pro Edition
- * 升级策略：
- * 1. Data Agent: 预先生成真实的中文业务数据，拒绝 Lorem Ipsum。
- * 2. Visual Agent: 强制注入 "Retina Render" 和 "Ant Design/iOS" 视觉规范。
- * 3. Consistency Shell: 像素级锁死导航栏和状态栏。
+ * ==============================================================================
+ * ARCHITECTURE: VIRTUAL DESIGN STUDIO (Master-Sub Agent Pattern)
+ * ==============================================================================
+ * 
+ * 1. Master Agent (Director): Controls Global Style, Brand Colors, and Quality Standards.
+ * 2. Data Agent (Content): Injects realistic business scenarios (No "Lorem Ipsum").
+ * 3. Layout Agent (Structure): Enforces Platform Shells (iOS/Web) and Component Hierarchy.
  */
 
-type PageType = 'LOGIN' | 'DASHBOARD' | 'TABLE' | 'FORM' | 'DETAIL';
-
-// --- 1. VISUAL DIRECTOR AGENT (视觉总监) ---
-
-const GLOBAL_STYLE = `
-【VISUAL DIRECTIVE: PRODUCTION REALISM】
-- **Render Engine**: Simulate a "Retina Display" screenshot. NO vector flat art. NO wireframes.
-- **Texture**: Subtle gradients, glassmorphism (frosted glass) on overlays, realistic drop-shadows (elevation level 2).
-- **Typography**: Use system fonts (San Francisco for App, Inter/Roboto for Web). Anti-aliased text.
-- **Color Palette**: 
-  - Brand: #1677FF (Enterprise Blue).
-  - Success: #52C41A (Green).
-  - Warning: #FAAD14 (Gold).
-  - Background: #F0F2F5 (Light Gray) - NEVER pure white backgrounds for the whole screen, use cards.
-- **Density**: High information density. Professional spacing (8px grid).
-`;
-
-const APP_SHELL_DEFINITION = `
-【CONSISTENCY SHELL: IOS APP】
-You are rendering a screenshot of an iPhone 15 Pro.
-1. **Status Bar (Top)**: Time "09:41", Cellular, WiFi, Battery Icon (Black text, transparent bg).
-2. **Bottom Tab Bar (Fixed Bottom)**: 
-   - Height: 80px, White Blur Background (Glass), Top Border #E5E5E5.
-   - 4 Icons with Text: [首页] [业务] [报表] [我的].
-   - Active Tab is Blue (#1677FF), others are Gray (#999999).
-`;
-
-const WEB_SHELL_DEFINITION = `
-【CONSISTENCY SHELL: WEB ADMIN】
-You are rendering a screenshot of a Chrome Browser on macOS (1920x1080).
-1. **Sidebar (Left, Width 240px)**: 
-   - Color: Dark Navy (#001529). 
-   - Logo area at top. 
-   - Menu Items: White text. Selected item has Blue background (#1677FF).
-2. **Header (Top, Height 64px)**: 
-   - Color: White. Shadow: Small bottom shadow.
-   - Content: Breadcrumb on left, User Avatar & Name on right.
-`;
-
-// --- 2. DATA CONTENT AGENT (数据填充专员) ---
-
-// 简单的规则引擎，生成拟真的中文数据
-const generateMockValue = (field: string): string => {
-    const f = field.toLowerCase();
-    if (f.includes('名') || f.includes('user') || f.includes('author')) return ['王伟', '李秀英', '张志强', '陈静'][Math.floor(Math.random()*4)];
-    if (f.includes('phone') || f.includes('tel')) return '138****8888';
-    if (f.includes('time') || f.includes('date') || f.includes('日期')) return '2024-05-20 14:30';
-    if (f.includes('status') || f.includes('状态')) return ['🟢 已完成', '🔵 进行中', '🟠 待审核'][Math.floor(Math.random()*3)];
-    if (f.includes('price') || f.includes('amount') || f.includes('金额')) return `¥${(Math.random()*10000).toFixed(2)}`;
-    if (f.includes('id') || f.includes('编号')) return `NO.${Math.floor(Math.random()*100000)}`;
-    if (f.includes('title') || f.includes('标题')) return '2024年度Q1业务汇报数据概览';
-    if (f.includes('desc') || f.includes('备注')) return '系统自动生成的数据快照，请核对。';
-    if (f.includes('type') || f.includes('类型')) return '普通类目';
-    if (f.includes('count') || f.includes('数量')) return Math.floor(Math.random()*100).toString();
-    return '示例数据';
+// --- 1. GLOBAL DESIGN TOKENS (The "Truth" source for consistency) ---
+const DESIGN_SYSTEM = {
+    brand: {
+        primary: "#1677FF", // Enterprise Blue
+        secondary: "#52C41A", // Success Green
+        warning: "#FAAD14",
+        error: "#FF4D4F",
+        bg_app: "#F5F5F7", // iOS System Gray 6
+        bg_web: "#F0F2F5", // Ant Design Gray
+        text_main: "#1F1F1F",
+        text_sub: "#8C8C8C",
+        card_bg: "#FFFFFF"
+    },
+    fonts: {
+        app: "San Francisco, PingFang SC, sans-serif",
+        web: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial"
+    }
 };
 
-const getActiveTab = (pageName: string): string => {
-  const name = pageName.toLowerCase();
-  if (name.includes('主页') || name.includes('首页') || name.includes('dashboard')) return '首页';
-  if (name.includes('我的') || name.includes('个人') || name.includes('设置')) return '我的';
-  if (name.includes('统计') || name.includes('报表') || name.includes('分析')) return '报表';
-  return '业务';
-};
+// --- 2. SUB AGENT: DATA ARCHITECT (Context-Aware Data Generator) ---
+// 职责：根据 Software Name 和 Context 深度编造数据，拒绝"示例数据"
+class DataAgent {
+    static generate(field: string, context: string, softwareName: string): string {
+        const f = field.toLowerCase();
+        const ctx = (context + softwareName).toLowerCase();
+        
+        // --- 场景一：房产/物业 ---
+        if (ctx.includes('房') || ctx.includes('产') || ctx.includes('物业') || ctx.includes('中介')) {
+            if (f.match(/title|name/)) return ['世纪花园三期 8-201', '香榭丽舍 A栋 1204', '龙湖天街 B座 3F'].sort(() => 0.5 - Math.random())[0];
+            if (f.match(/price|amount/)) return `¥${(Math.random() * 500 + 200).toFixed(0)}万`;
+            if (f.match(/status/)) return '出售中';
+            if (f.match(/user|owner/)) return '王建国';
+            if (f.match(/tag/)) return '精装修 随时看房';
+        }
 
-const identifyPageType = (spec: PageSpec): PageType => {
-  const name = spec.name.toLowerCase();
-  if (name.includes('登录') || name.includes('login') || name.includes('注册')) return 'LOGIN';
-  if (name.includes('主页') || name.includes('概览') || name.includes('dashboard')) return 'DASHBOARD';
-  if (name.includes('管理') || name.includes('列表') || name.includes('查询') || name.includes('记录')) return 'TABLE';
-  if (name.includes('新增') || name.includes('编辑') || name.includes('配置')) return 'FORM';
-  return 'DETAIL';
-};
+        // --- 场景二：电商/零售 ---
+        if (ctx.includes('商') || ctx.includes('货') || ctx.includes('购') || ctx.includes('店')) {
+            if (f.match(/title|name/)) return ['Nike Air Jordan 1 Low', 'iPhone 15 Pro Max 256G', '戴森 V12 吸尘器'].sort(() => 0.5 - Math.random())[0];
+            if (f.match(/price|amount/)) return `¥${(Math.random() * 8000 + 500).toFixed(2)}`;
+            if (f.match(/status/)) return '待发货';
+            if (f.match(/count|stock/)) return '库存: 1,204';
+            if (f.match(/user/)) return '李薇薇';
+        }
 
-// --- 3. SCENE COMPOSER (场景合成器) ---
+        // --- 场景三：医疗/健康 ---
+        if (ctx.includes('医') || ctx.includes('药') || ctx.includes('诊')) {
+            if (f.match(/title|name|dept/)) return ['心血管内科-专家号', '核磁共振检查单', '住院部-12床'].sort(() => 0.5 - Math.random())[0];
+            if (f.match(/status/)) return '候诊中';
+            if (f.match(/user|doctor/)) return '张文宏主任';
+            if (f.match(/date/)) return '2024-03-21 09:30';
+        }
 
-const getWebTemplate = (type: PageType, spec: PageSpec, softwareName: string) => {
-  // Inject Mock Data
-  const mockRows = [1, 2, 3].map(() => {
-      return spec.fields.slice(0, 5).map(f => `${f}:"${generateMockValue(f)}"`).join(', ');
-  }).join('\n      - Row: ');
+        // --- 场景四：教育/培训 ---
+        if (ctx.includes('教') || ctx.includes('学') || ctx.includes('课')) {
+            if (f.match(/title|course/)) return ['2024秋季高等数学(上)', '雅思口语强化班-V2', 'Python数据分析实战'].sort(() => 0.5 - Math.random())[0];
+            if (f.match(/status/)) return '进行中';
+            if (f.match(/score|grade/)) return '92分';
+            if (f.match(/user|student/)) return '陈小明';
+        }
 
-  const fieldList = spec.fields.slice(0, 6).join(', ');
-  const btnList = spec.operations.join('", "');
+        // --- 通用兜底策略 ---
+        // 特殊：来源/图标
+        if (f.match(/source|icon|来源|图标/)) return '[Logo]';
 
-  let contentInstruction = "";
+        // 特殊：标签
+        if (f.match(/tag|label|标签/)) 
+            return ['【高优先级】', '【内部保密】', '【紧急】'].join(' ');
 
-  switch (type) {
-    case 'LOGIN': 
-      contentInstruction = `
-        **SCENE: LOGIN**
-        - Background: High-tech abstract blue particle wave or gradient.
-        - Center Card: White glossy card with shadow.
-        - Logo: "${softwareName}" (Bold, Blue).
-        - Inputs: "请输入账号", "请输入密码".
-        - Button: "立即登录" (Full width, Blue gradient).
-      `;
-      break;
-    case 'DASHBOARD': 
-      contentInstruction = `
-        **SCENE: DASHBOARD**
-        - **Cards Row**: 4 cards showing metrics like "总用户数: 12,390", "今日营收: ¥45,000".
-        - **Charts**: 
-          - Left: Line chart "近30日趋势" (Blue line, smooth curve).
-          - Right: Pie chart "数据分布".
-        - **Table**: Small table at bottom "最新动态".
-      `;
-      break;
-    case 'TABLE': 
-      contentInstruction = `
-        **SCENE: DATA GRID**
-        - **Container**: White Card with padding.
-        - **Toolbar**: Filter inputs (Label: ${spec.fields[0] || '关键字'}), Button "查询" (Blue), Button "${spec.operations[0] || '新建'}" (Primary).
-        - **The Grid**:
-          - Headers: ${fieldList}, "操作".
-          - **Data Rows (RENDER THESE VALUES)**:
-            - Row: ${mockRows}
-          - Style: Striped rows, Tag for status column.
-        - **Pagination**: "共 102 条 < 1 2 3 ... 10 >" at bottom right.
-      `;
-      break;
-    default: // FORM or DETAIL
-      contentInstruction = `
-        **SCENE: FORM / DETAIL**
-        - **Container**: White Card centered.
-        - **Header**: Title "${spec.name}".
-        - **Form Content**:
-          ${spec.fields.map(f => `- Field "${f}": Input showing placeholder "${generateMockValue(f)}"`).join('\n          ')}
-        - **Footer**: Buttons "${btnList}" (Align right).
-      `;
-  }
+        // 特殊：摘要/备注
+        if (f.match(/summary|desc|备注|说明/)) 
+            return '系统自动同步数据，请尽快复核。数据来源：中央服务器。';
 
-  return `
-    ${GLOBAL_STYLE}
-    ${WEB_SHELL_DEFINITION}
+        // 人员相关
+        if (f.match(/user|name|author|姓名|人员|负责人/)) 
+            return ['林峰', '张晓云', '王志强', '陈艾琳'][Math.floor(Math.random() * 4)];
+        
+        // 状态相关
+        if (f.match(/status|state|状态|进度/)) 
+            return ['🟢 已完成', '🔵 处理中', '🟠 待审核', '🔴 异常'][Math.floor(Math.random() * 4)];
+        
+        // 数值/金额
+        if (f.match(/price|amount|cost|金额|价格|费用|total/)) 
+            return `¥${(Math.random() * 10000 + 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        
+        // 数量
+        if (f.match(/count|num|qty|数量|库存/)) 
+            return Math.floor(Math.random() * 500 + 50).toString();
+
+        // 时间
+        if (f.match(/time|date|at|日期|时间|发布/)) 
+            return `2024-03-${Math.floor(Math.random()*28+1).toString().padStart(2,'0')} 09:41`;
+        
+        return '业务标准数据';
+    }
+
+    static generateList(fields: string[], count: number, context: string, softwareName: string): string {
+        return Array.from({ length: count }).map((_, idx) => {
+            // Slight variation for each row to look natural
+            const variation = idx; 
+            const rowData = fields.slice(0, 5).map(f => {
+                // Generate specific data based on field name
+                return `${f}: "${this.generate(f, context, softwareName)}"`;
+            }).join(', ');
+            return `{ ${rowData} }`;
+        }).join('\n      ');
+    }
+}
+
+// --- 3. SUB AGENT: LAYOUT ENGINE (Platform Specific Shells) ---
+// 职责：强制锁死 "Shell"（状态栏、导航栏），确保截图看起来像真机运行。
+class LayoutAgent {
     
-    **CONTENT AREA (Right side)**:
-    - Background: #F0F2F5.
-    - Breadcrumb: 首页 / ${spec.name}.
-    ${contentInstruction}
-  `;
-};
+    // iOS 真机外壳 (High Fidelity)
+    static getIOSShell(activeTab: string, pageTitle: string) {
+        return `
+    【LAYER: IOS 17 SYSTEM SHELL (MANDATORY)】
+    - **Visual Style**: Flat, Minimalist, San Francisco Font.
+    - **Status Bar (Top)**: 
+      - Height: 44px. Background: Transparent.
+      - Left: "09:41" (Bold Black). 
+      - Center: Dynamic Island (Black Pill Shape).
+      - Right: Signal (4 bars), WiFi (3 arcs), Battery (Full Black Icon).
+    - **Navigation Bar**:
+      - Height: 44px. Background: #FFFFFF.
+      - Layout: [ < Back ]   [ **${pageTitle}** ]   [ ... ]
+      - Font: PingFang SC Medium, 17pt, #000000.
+    - **Bottom Tab Bar**:
+      - Height: 83px (including Home Indicator).
+      - Background: #FFFFFF with Top Border (0.5px #E5E5E5).
+      - Tabs: [🏠 首页] [📂 业务] [📊 报表] [👤 我的].
+      - **Active State**: The tab "${activeTab}" is colored **#1677FF (Blue)**. Others are #8C8C8C (Gray).
+    - **Home Indicator**: A rounded black bar (width 134px, height 5px) at the very bottom center.
+        `;
+    }
 
-const getAppTemplate = (type: PageType, spec: PageSpec, softwareName: string) => {
-  const activeTab = getActiveTab(spec.name);
-  
-  if (type === 'LOGIN') return `
-    ${GLOBAL_STYLE}
-    **SCENE: MOBILE LOGIN**
-    - Background: Pure White.
-    - Top: Large Logo Icon + Text "${softwareName}".
-    - Middle: 
-      - Input "手机号/邮箱"
-      - Input "密码"
-      - Button "登录" (Blue, Rounded Pill shape, Shadow).
-    - Bottom: "其他登录方式" icons (WeChat, Alipay).
-  `;
+    // Web 管理后台外壳 (Ant Design Pro Style)
+    static getWebShell(softwareName: string, activeMenu: string) {
+        return `
+    【LAYER: ANT DESIGN PRO SHELL (MANDATORY)】
+    - **Visual Style**: Enterprise, Clean, "Ant Design" System.
+    - **Sidebar (Left)**:
+      - Width: 256px. Background: #001529 (Deep Navy Blue).
+      - Logo Area: Height 64px. Logo Icon + "${softwareName}" (White Text).
+      - Menu:
+        - 📊 工作台 (Dashboard)
+        - 📂 列表管理 (Lists)
+        - 📝 表单页 (Forms)
+        - ⚙️ 系统设置 (Settings)
+      - **Active Item**: The menu item corresponding to "${activeMenu}" has a **#1677FF (Blue)** background rectangle.
+    - **Header (Top)**:
+      - Height: 64px. Background: #FFFFFF. Shadow: 0 1px 4px rgba(0,21,41,0.08).
+      - Right Side: [🔍] [❓] [🔔] [Avatar Admin].
+    - **Page Header**:
+      - Background: #FFFFFF. Padding: 16px 24px.
+      - Breadcrumb: Home / ${activeMenu} / Current Page.
+      - Title: **${activeMenu}** (20px Bold).
+        `;
+    }
 
-  // Inject Mock Data for List
-  const mockCards = [1, 2, 3].map(() => {
-      const title = spec.fields[0] || '标题';
-      const subtitle = spec.fields[1] || '副标题';
-      const status = spec.fields.find(f => f.includes('状态')) || '状态';
-      return `- Card: Title "${generateMockValue(title)}", Sub="${generateMockValue(subtitle)}", Status Tag="${generateMockValue(status)}"`;
-  }).join('\n      ');
+    static composePrompt(
+        type: 'App' | 'Web', 
+        pageType: string, 
+        spec: PageSpec, 
+        dataContext: string,
+        softwareName: string
+    ): string {
+        const isApp = type === 'App';
+        
+        // Map PageSpec to Shell Context
+        let activeTab = '首页';
+        if (spec.name.includes('我的') || spec.name.includes('个人')) activeTab = '我的';
+        else if (spec.name.includes('报表') || spec.name.includes('统计')) activeTab = '报表';
+        else if (spec.name.includes('业务') || spec.name.includes('列表')) activeTab = '业务';
+        else if (spec.name.includes('工作台') || spec.name.includes('首页')) activeTab = '首页';
 
-  let contentInstruction = "";
-  if (type === 'DASHBOARD') {
-      contentInstruction = `
-      - **Banner**: Blue Gradient Banner at top showing "今日数据".
-      - **Grid Nav**: 2x4 Grid of colorful icons (Function Modules).
-      - **News Feed**: List of notification items.
-      `;
-  } else if (type === 'TABLE') {
-      contentInstruction = `
-      - **Search Bar**: Grey rounded input "搜索${spec.name}..." at top.
-      - **List View**: Vertical scroll list of cards.
-      ${mockCards}
-      - **Floating Action Button (FAB)**: Blue "+" button at bottom right.
-      `;
-  } else {
-      // Form/Detail
-      contentInstruction = `
-      - **Grouped List**: iOS Settings style grouped cells.
-      ${spec.fields.map(f => `- Cell: Label "${f}" | Value "${generateMockValue(f)}" (Align Right, Grey)`).join('\n      ')}
-      - **Action Area**: Fixed bottom button "${spec.operations[0] || '提交'}".
-      `;
-  }
+        let activeMenu = '工作台';
+        if (spec.name.includes('列表') || spec.name.includes('查询')) activeMenu = '列表管理';
+        if (spec.name.includes('新增') || spec.name.includes('编辑')) activeMenu = '表单页';
 
-  return `
-    ${GLOBAL_STYLE}
-    ${APP_SHELL_DEFINITION}
-    - **ACTIVE TAB**: **"${activeTab}"** (Must be BLUE).
+        const shell = isApp 
+            ? this.getIOSShell(activeTab, spec.name) 
+            : this.getWebShell(softwareName, activeMenu);
+
+        const mockData = DataAgent.generateList(spec.fields, 4, dataContext, softwareName);
+
+        let layoutDirective = "";
+
+        // 根据页面类型选择最佳布局范式
+        switch(pageType) {
+            case 'DASHBOARD':
+                layoutDirective = `
+    **LAYOUT PATTERN: DATA DASHBOARD (驾驶舱)**
+    - **Top Stats Row**: 4 White Cards. E.g. "Total Sales", "Visits", "Payments", "Operational Effect".
+      - Value: Large Bold Number (e.g. 12,450). Trend: +5% (Green).
+    - **Main Chart**: A large white card containing a **Line Chart** (Smooth curves, Blue gradient fill).
+    - **Sub Charts**: 
+      - Left: Pie Chart ("Distribution").
+      - Right: Bar Chart ("Rankings").
+                `;
+                break;
+            case 'TABLE':
+                layoutDirective = `
+    **LAYOUT PATTERN: DATA GRID (标准列表)**
+    - **Filter Bar**: A white card at the top. Inputs: "Search Keyword", "Status Dropdown", "Date Range". Button: "Query" (Blue, Right aligned).
+    - **The Grid**:
+      - Style: Ant Design Table. White background.
+      - Header: Light Gray (#FAFAFA), Bold Text.
+      - Rows: 4-5 rows of realistic data.
+      - **Content Injection**:
+      ${mockData}
+      - **Action Column**: Blue Links "View | Edit | More".
+    - **Pagination**: "Total 480 items < 1 2 3 ... 10 >" at bottom right.
+                `;
+                break;
+            case 'FORM':
+                layoutDirective = `
+    **LAYOUT PATTERN: INPUT FORM (信息录入)**
+    - **Container**: ${isApp ? 'Grouped Table View (iOS Settings Style)' : 'Centered White Paper Card (Width 800px)'}.
+    - **Input Fields**:
+      - Render 5-6 fields vertically.
+      - Style: Label on Top/Left. Input Box with Border (#D9D9D9).
+      - **Pre-filled Data**: Use realistic values like "${DataAgent.generate(spec.fields[0]||'title', dataContext, softwareName)}".
+    - **Form Actions**: Fixed Footer with "Submit" (Primary Blue) and "Cancel" buttons.
+                `;
+                break;
+            case 'DETAIL':
+                layoutDirective = `
+    **LAYOUT PATTERN: INFO DETAIL (详情页)**
+    - **Page Header**: Title "${DataAgent.generate('title', dataContext, softwareName)}" with Status Tag [${DataAgent.generate('status', dataContext, softwareName)}].
+    - **Description List**: A grid of key-value pairs (Gray Label, Black Text).
+    - **Tabs**: [Details] [History] [Logs].
+    - **Table Section**: A small table showing "Related Records".
+                `;
+                break;
+            case 'LOGIN':
+                layoutDirective = `
+    **LAYOUT PATTERN: AUTHENTICATION**
+    - **Style**: Modern, High-End, Trustworthy.
+    - **Center Card**:
+      - Logo Icon (Vector style).
+      - Title: "${softwareName}" (Large Bold).
+      - Input: "Username" (Icon: User), "Password" (Icon: Lock).
+      - Button: "Login" (Full Width, Blue Gradient).
+      - Footer: "Copyright © 2024 ${softwareName} Corp".
+                `;
+                break;
+        }
+
+        return `
+    ${shell}
     
-    **SCREEN CONTENT**:
-    - **Nav Bar**: Title "${spec.name}" (Black, Centered). Back Icon on left.
-    ${contentInstruction}
-  `;
-};
+    【LAYER: CONTENT VISUALS】
+    - **Background**: ${isApp ? DESIGN_SYSTEM.brand.bg_app : DESIGN_SYSTEM.brand.bg_web}
+    - **Primary Color**: ${DESIGN_SYSTEM.brand.primary} (Blue)
+    - **UI Components**: Use "Ant Design" (Web) or "iOS UIKit" (App) standard components.
+    - **Shadows**: Soft, diffused shadows (0 4px 12px rgba(0,0,0,0.05)).
+    - **Text Rendering**: Sharp, High Contrast, **CHINESE SIMPLIFIED** characters.
+    
+    ${layoutDirective}
+        `;
+    }
+}
 
-// --- FALLBACK MECHANISM ---
-const generateFallbackImage = (title: string, type: 'App' | 'Web'): string => {
-  const canvas = document.createElement('canvas');
-  canvas.width = type === 'App' ? 1080 : 1920;
-  canvas.height = type === 'App' ? 1920 : 1080;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
+// --- 4. MASTER AGENT: VISUAL DIRECTOR (Orchestrator) ---
+// 职责：识别意图，调用子 Agent，组装最终 Prompt，调用 AI。
 
-  ctx.fillStyle = '#f0f2f5';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = '#d9d9d9';
-  ctx.lineWidth = 10;
-  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
-  ctx.fillStyle = '#666666';
-  ctx.font = 'bold 80px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 50);
-  ctx.font = '40px sans-serif';
-  ctx.fillStyle = '#999999';
-  ctx.fillText('(图片生成服务繁忙，此为占位)', canvas.width / 2, canvas.height / 2 + 60);
-
-  return canvas.toDataURL('image/png').split(',')[1];
+const identifyPageType = (name: string): string => {
+    const n = name.toLowerCase();
+    if (n.match(/login|signin|登录|注册/)) return 'LOGIN';
+    if (n.match(/dashboard|home|index|主页|概览|驾驶舱/)) return 'DASHBOARD';
+    if (n.match(/list|table|search|query|列表|查询|管理/)) return 'TABLE';
+    if (n.match(/add|edit|create|config|new|新增|编辑|配置/)) return 'FORM';
+    if (n.match(/detail|info|view|详情|信息|查看/)) return 'DETAIL';
+    return 'TABLE'; // Default fallback to Table as it's most common in Admin systems
 };
 
 export const renderUiImage = async (
-  spec: PageSpec, 
-  softwareName: string, 
-  softwareType: 'Web' | 'App' | 'Backend' | 'Plugin',
-  signal?: AbortSignal
+    spec: PageSpec, 
+    softwareName: string, 
+    softwareType: 'Web' | 'App' | 'Backend' | 'Plugin',
+    signal?: AbortSignal
 ): Promise<string | null> => {
-  const pageType = identifyPageType(spec);
-  const isApp = softwareType === 'App';
-  const aspectRatio = isApp ? "9:16" : "16:9";
-  
-  // 1. Construct the "Super Prompt"
-  const template = isApp 
-     ? getAppTemplate(pageType, spec, softwareName) 
-     : getWebTemplate(pageType, spec, softwareName);
+    // 1. Context Analysis
+    const pageType = identifyPageType(spec.name);
+    const isApp = softwareType === 'App';
+    const aspectRatio = isApp ? "9:16" : "16:9";
 
-  const fullPrompt = `
+    // 2. Call Layout Agent to build the structural prompt
+    const layoutPrompt = LayoutAgent.composePrompt(
+        isApp ? 'App' : 'Web', 
+        pageType, 
+        spec, 
+        softwareName, // Context for data generation
+        softwareName
+    );
+
+    // 3. Construct Final Master Prompt
+    const fullPrompt = `
     Role: Expert UI/UX Designer & 3D Renderer.
     Task: Create a **PHOTOREALISTIC SCREENSHOT** of a software interface.
     
-    【CRITICAL INSTRUCTIONS】
-    1. **Realism**: Look like a real app running on a high-res screen. NOT a sketch. NOT a vector illustration.
+    【GLOBAL VISUAL DIRECTIVE】
+    1. **Resolution & Fidelity**: 8K Resolution, High DPI, Retina Display. 
+       - No blur. No artifacts. Text must be legible.
+       - Use "Sub-pixel rendering" style for text sharpness.
     2. **Language**: The UI text MUST be **CHINESE (Simplified)**.
-    3. **Data**: Use the provided MOCK DATA values. Do NOT use "Lorem Ipsum" or "Name 1".
-    4. **Consistency**: Respect the Shell Definition (Sidebar/Tabbar) exactly.
+    3. **Style Reference**:
+       - ${isApp ? 'iOS 17 Design Kit, Apple Human Interface Guidelines' : 'Ant Design Pro v5, Enterprise Admin Dashboard'}.
+       - Clean, Modern, Professional, "Dribbble top shot" quality.
     
-    ${template}
-  `;
+    【PAGE CONTEXT】
+    - Software: "${softwareName}"
+    - Page Title: "${spec.name}"
+    - Purpose: "${spec.purpose}"
+    
+    ${layoutPrompt}
+    
+    **CRITICAL INSTRUCTION**: 
+    - Render specific, realistic business data provided in the prompt (e.g. names, prices, statuses). 
+    - DO NOT use "Lorem Ipsum" or "Sample Text". 
+    - DO NOT use "XXX" or placeholders. 
+    - Populate the grid/form with the JSON data provided above.
+    `;
 
-  try {
-      // 2. Call Image Generation
-      const result = await aiClient.generateImage(fullPrompt, aspectRatio, signal);
-      if (result) return result;
-      throw new Error("AI returned null/empty image");
-  } catch (e) {
-      if (signal?.aborted) throw e;
-      console.warn(`[UI Renderer] AI generation failed for ${spec.name}, using local fallback.`, e);
-      return generateFallbackImage(spec.name, isApp ? 'App' : 'Web');
-  }
+    // 4. Execution
+    try {
+        const result = await aiClient.generateImage(fullPrompt, aspectRatio, signal);
+        if (result) return result;
+        throw new Error("AI returned null/empty image");
+    } catch (e) {
+        if (signal?.aborted) throw e;
+        console.warn(`[Visual Director] Generation failed for ${spec.name}, fallback initiated.`, e);
+        // Fallback Logic (Simple Canvas)
+        return generateFallbackImage(spec.name, isApp ? 'App' : 'Web');
+    }
 };
+
+// --- Fallback Helper (Legacy) ---
+const generateFallbackImage = (title: string, type: 'App' | 'Web'): string => {
+    const canvas = document.createElement('canvas');
+    canvas.width = type === 'App' ? 1080 : 1920;
+    canvas.height = type === 'App' ? 1920 : 1080;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+  
+    ctx.fillStyle = '#f0f2f5';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#d9d9d9';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+    ctx.fillStyle = '#666666';
+    ctx.font = 'bold 80px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 50);
+    ctx.font = '40px sans-serif';
+    ctx.fillStyle = '#999999';
+    ctx.fillText('(生成服务繁忙，此为占位)', canvas.width / 2, canvas.height / 2 + 60);
+  
+    return canvas.toDataURL('image/png').split(',')[1];
+  };

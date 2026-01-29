@@ -140,7 +140,8 @@ class GeminiClient {
                 model: this.modelImage,
                 contents: { parts: [{ text: prompt }] },
                 config: {
-                    imageConfig: { imageSize: "1K", aspectRatio: aspectRatio }
+                    // UPGRADE: Use 2K resolution for sharper UI text
+                    imageConfig: { imageSize: "2K", aspectRatio: aspectRatio }
                 }
             });
             this.trackUsage(response);
