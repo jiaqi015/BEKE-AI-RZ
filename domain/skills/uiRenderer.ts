@@ -4,143 +4,141 @@ import { PageSpec } from "../../types";
 
 /**
  * ==============================================================================
- * ARCHITECTURE: UX CINEMATOGRAPHER (Virtual Photography)
+ * ARCHITECTURE: INTERFACE DESIGNER (Digital Export)
  * ==============================================================================
  * 
  * Philosophy: 
- * Instead of asking AI to "draw a UI", we ask it to "photograph a device running the App".
- * This tricks the model into handling lighting, depth, and material correctness much better.
+ * Pure Digital Design. No Camera. No Lighting. No Desk.
+ * Just the pixels on the screen, exported from Figma.
  */
 
-type AppVibe = 'IMMERSIVE_VIDEO' | 'HIGH_DENSITY_RETAIL' | 'MODERN_UTILITY' | 'SOCIAL_CHAT' | 'SAAS_DASHBOARD';
+type AppVibe = 'IMMERSIVE_MEDIA' | 'ECOMMERCE_DENSE' | 'SOCIAL_CLEAN' | 'UTILITY_MAP' | 'ENTERPRISE_DASHBOARD';
 
-class UXCinematographer {
+class InterfaceDesigner {
 
     static detectVibe(softwareName: string, softwareType: string, pageName: string): AppVibe {
         const n = (softwareName + pageName).toLowerCase();
         
-        if (softwareType !== 'App') return 'SAAS_DASHBOARD';
+        if (softwareType !== 'App') return 'ENTERPRISE_DASHBOARD';
 
-        // 抖音/直播/视频类
-        if (n.match(/video|stream|live|play|douyin|tiktok|视频|直播|娱乐|沉浸|播放/)) return 'IMMERSIVE_VIDEO';
+        // 抖音/直播/视频/沉浸
+        if (n.match(/video|stream|live|douyin|tiktok|视频|直播|沉浸|播放|动态/)) return 'IMMERSIVE_MEDIA';
         
-        // 淘宝/电商/外卖类
-        if (n.match(/shop|mall|buy|store|food|cart|电商|商城|购物|外卖|商品|支付/)) return 'HIGH_DENSITY_RETAIL';
+        // 淘宝/电商/外卖/密集信息
+        if (n.match(/shop|mall|store|buy|电商|商城|购物|商品|特价|首页/)) return 'ECOMMERCE_DENSE';
         
-        // 社交/聊天类
-        if (n.match(/chat|social|message|friend|微信|社交|好友|消息|社区/)) return 'SOCIAL_CHAT';
+        // 社交/列表/聊天
+        if (n.match(/chat|social|message|friend|微信|社交|消息|通讯录/)) return 'SOCIAL_CLEAN';
 
-        // 默认工具/地图/阅读类
-        return 'MODERN_UTILITY';
+        // 地图/房产/打车
+        if (n.match(/map|house|travel|taxi|地图|房产|出行|位置/)) return 'UTILITY_MAP';
+
+        // 默认通用
+        return 'SOCIAL_CLEAN';
     }
 
     /**
-     * 1. The Stage (光影与材质)
-     * 定义整个画面的“高级感”来源
+     * 1. The Canvas (画布设定)
+     * 定义“设计原稿”的质感，拒绝摄影感
      */
-    static getStageDirectives(vibe: AppVibe): string {
+    static getCanvasDirectives(vibe: AppVibe): string {
         const common = `
-        **PHOTOGRAPHY SETUP**:
-        - **Camera**: Macro lens, 50mm f/1.8. 
-        - **Perspective**: Front-facing slightly angled view of a high-end smartphone screen.
-        - **Quality**: 8k resolution, Unreal Engine 5 render, Octane Render, Ray Tracing.
-        - **Screen**: High DPI Retina Display, perfect anti-aliasing.
+        **RENDER STYLE: DIRECT FIGMA EXPORT**
+        - **View**: Flat 2D, Front-facing, Full Screen. 
+        - **Quality**: Vector-like sharpness, No artifacts, No blur, No lens distortion.
+        - **Frame**: **NO DEVICE FRAME**. Just the UI screen rectangle.
+        - **Background**: The UI fills the entire image canvas.
+        - **Typography**: San Francisco (iOS) or Roboto (Android). Crisp and legible.
         `;
 
         switch (vibe) {
-            case 'IMMERSIVE_VIDEO':
+            case 'IMMERSIVE_MEDIA':
                 return `
         ${common}
-        - **Lighting**: Cinematic dark room, neon ambient glow (Cyberpunk colors: Purple/Blue) reflecting on the glass edges.
-        - **Vibe**: Energetic, Mysterious, Gen-Z.
-        - **Material**: Glassmorphism (Frosted glass overlays), glowing text.
+        - **Theme**: Dark Mode (Transparent overlays on full-screen content).
+        - **Palette**: Neon accents, White text with shadow.
                 `;
-            case 'HIGH_DENSITY_RETAIL':
+            case 'ECOMMERCE_DENSE':
                 return `
         ${common}
-        - **Lighting**: Bright studio lighting, soft shadows, warm tone (Inviting).
-        - **Vibe**: Busy, Vibrant, "Shopping Festival" excitement.
-        - **Material**: Glossy cards, vibrant gradients (Orange/Red), pop-out badges.
+        - **Theme**: Light/White Background.
+        - **Palette**: Vibrant (Orange/Red) for CTA and Prices.
+        - **Density**: High. Lots of cards and images.
                 `;
-            case 'SAAS_DASHBOARD':
+            case 'ENTERPRISE_DASHBOARD':
                 return `
         ${common}
-        - **Lighting**: Clean office daylight, cool white tone.
-        - **Vibe**: Professional, Efficient, "Linear/Stripe" aesthetic.
-        - **Material**: Matte white surfaces, subtle borders, crisp sans-serif typography.
+        - **Theme**: Professional Light Grey / White.
+        - **Palette**: Enterprise Blue (#1890ff).
+        - **Structure**: Grid system, precise alignment.
                 `;
             default:
                 return `
         ${common}
-        - **Lighting**: Natural daylight, minimalist setup.
-        - **Vibe**: Clean, Trustworthy, "Apple Design Award" winner style.
-        - **Material**: Flat design 2.0, soft drop shadows, rounded corners.
+        - **Theme**: Clean White / Minimalist.
+        - **Palette**: Brand colors based on context.
                 `;
         }
     }
 
     /**
-     * 2. The Content (具体 UI 元素)
-     * 针对不同 App 类型，强制生成特定的 UI 组件，打破“表格魔咒”
+     * 2. The Layout (组件布局)
+     * 纯粹描述 UI 结构，去除环境描述
      */
-    static getContentDirectives(vibe: AppVibe, spec: PageSpec, softwareName: string): string {
-        const mockData = `Context: ${softwareName}, Page: ${spec.name}`;
-        
+    static getLayoutDirectives(vibe: AppVibe, spec: PageSpec, softwareName: string): string {
         switch (vibe) {
-            case 'IMMERSIVE_VIDEO':
+            case 'IMMERSIVE_MEDIA':
                 return `
-        **UI COMPOSITION: FULL-SCREEN VIDEO FEED (TikTok Style)**
-        1. **Background**: A high-quality full-screen video/image of a real person or scene (Life-like).
-        2. **Overlay UI (White text with shadow)**:
-           - Bottom Left: @Username, Description text (2 lines), Music scrolling ticker.
-           - Right Side: Vertical stack of icons [Avatar, Heart, Comment, Share].
-        3. **Navigation**: Floating translucent bottom bar [Home, Friend, Inbox, Me].
-        4. **Realism**: Ensure the text contrasts well with the background video.
+        **LAYOUT: IMMERSIVE FEED (Like Douyin/TikTok)**
+        1. **Background**: A high-quality full-screen real-world photo (Portrait) representing the content.
+        2. **Overlay Controls**:
+           - **Bottom Left**: User Name (@Name), Description (2 lines), Music Info. (White text).
+           - **Right Side**: Vertical column of icons: [Avatar], [Heart], [Comment], [Share].
+        3. **Bottom Nav**: Floating translucent bar: [Home] [Friends] [+] [Inbox] [Me].
                 `;
 
-            case 'HIGH_DENSITY_RETAIL':
+            case 'ECOMMERCE_DENSE':
                 return `
-        **UI COMPOSITION: E-COMMERCE WATERFALL (Taobao Style)**
-        1. **Header**: Search bar with "Scan" icon + Colorful Banner Carousel (Promotion).
-        2. **Main Layout**: Dual-column Masonry Grid (Waterfall flow).
-        3. **Card Design**:
-           - Product Image (70% height).
-           - Title (2 lines black text).
-           - Price Tag (Large Red Font "¥299").
-           - Badges: "Free Shipping", "Best Seller" (Small rounded tags).
-        4. **Floating**: A circular "Cart" or "Top" button on bottom right.
+        **LAYOUT: SHOPPING WATERFALL (Like Taobao)**
+        1. **Top Bar**: Search input field with "Camera" icon.
+        2. **Banner**: Colorful marketing carousel at top.
+        3. **Grid**: 2-Column Masonry Layout (Product Cards).
+           - Image (Top).
+           - Title (2 lines, Black).
+           - Price (Large Red, e.g., ¥199).
+           - Tags (Small Red badge "Free Shipping").
+        4. **Bottom Nav**: Standard Tab Bar: [Home] [Cart] [Orders] [Me].
                 `;
 
-            case 'SOCIAL_CHAT':
+            case 'UTILITY_MAP':
                 return `
-        **UI COMPOSITION: MESSAGING LIST (WeChat Style)**
-        1. **Rows**: List of chat sessions. Avatar (Left, Rounded Square) + Name (Top) + Last Message (Bottom Gray) + Time (Right).
-        2. **Styling**: Clean white background, thin gray separators.
-        3. **Status**: Red notification dots on some avatars.
-        4. **Bottom Bar**: [Chats] [Contacts] [Discover] [Me].
+        **LAYOUT: MAP SERVICE (Like Beike/Uber)**
+        1. **Background**: Full screen map view (Vector map style).
+        2. **Pins**: Multiple location markers with price tags (e.g., "450万") scattered on map.
+        3. **Bottom Card**: A floating white card at the bottom (taking up 30% height).
+           - Content: House/Car details (Thumbnail + Title + Price).
+           - Action Button: "Contact Agent" (Blue).
                 `;
 
-            case 'SAAS_DASHBOARD':
+            case 'ENTERPRISE_DASHBOARD':
                 return `
-        **UI COMPOSITION: ANALYTICS DASHBOARD (B-Side)**
-        1. **Layout**: Sidebar Navigation (Dark) + Main Content Area (Light).
-        2. **Widgets**:
-           - "Total Revenue": Big Number Card + Line Chart trend.
-           - "Active Users": Bar Chart.
-           - "Recent Activity": Data Table with status badges (Green/Red).
-        3. **Style**: High information density, but clean whitespace.
+        **LAYOUT: ADMIN DASHBOARD**
+        1. **Sidebar**: Left vertical menu (Dark blue background).
+        2. **Header**: Top white bar with Breadcrumbs and User Avatar.
+        3. **Content**:
+           - **Stats Row**: 4 Summary Cards (Total Sales, Visits, etc).
+           - **Main Chart**: A large Line/Bar chart in a white card.
+           - **Data Table**: A grid with headers (Name, Status, Date, Action) and 5 rows of data.
                 `;
 
-            default: // MODERN_UTILITY
+            default: // SOCIAL_CLEAN
                 return `
-        **UI COMPOSITION: MODERN CARD FEED (Airbnb/Uber Style)**
-        1. **Cards**: Large, full-width cards with rounded corners (16px).
-        2. **Card Content**:
-           - High-res Hero Image.
-           - Bold Title below image.
-           - Meta info row (Rating star, Distance, Price).
-        3. **Typography**: Heavy/Bold Headings (iOS Large Title standard).
-        4. **Tab Bar**: Blur effect background.
+        **LAYOUT: STANDARD LIST (iOS Style)**
+        1. **Header**: Large Title "${spec.name}" (Align Left).
+        2. **List**: Vertical list of items.
+           - Row Style: Icon/Image (Left) + Title/Subtitle (Middle) + Arrow/Status (Right).
+           - Separators: Thin gray lines.
+        3. **Bottom Nav**: Standard Tab Bar with icons.
                 `;
         }
     }
@@ -156,37 +154,36 @@ export const renderUiImage = async (
 ): Promise<string | null> => {
     
     // 1. Analyze Context
-    const vibe = UXCinematographer.detectVibe(softwareName, softwareType, spec.name);
+    const vibe = InterfaceDesigner.detectVibe(softwareName, softwareType, spec.name);
     const isApp = softwareType === 'App';
-    const aspectRatio = isApp ? "9:16" : "16:9";
+    const aspectRatio = isApp ? "9:16" : "16:9"; // 保持屏幕比例，不带外壳
 
-    // 2. Build the "Cinematography" Prompt
-    const stagePrompt = UXCinematographer.getStageDirectives(vibe);
-    const contentPrompt = UXCinematographer.getContentDirectives(vibe, spec, softwareName);
+    // 2. Build the "Design Export" Prompt
+    const canvasPrompt = InterfaceDesigner.getCanvasDirectives(vibe);
+    const layoutPrompt = InterfaceDesigner.getLayoutDirectives(vibe, spec, softwareName);
     
     // 3. Construct Final Master Prompt
-    // Trick: asking for a "Dribbble Shot" or "Mockup" often yields better UI results than "Screenshot"
     const fullPrompt = `
-    Role: World-class UI/UX Designer & 3D Artist.
-    Task: Create a **Photorealistic Mockup** of a ${isApp ? 'Mobile App' : 'Web Dashboard'}.
+    Role: Expert UI Designer.
+    Task: Export a **High-Fidelity UI Design Mockup** (Figma Export).
     
-    【THE LOOK & FEEL】
-    ${stagePrompt}
+    【VISUAL STYLE】
+    ${canvasPrompt}
     
-    【THE CONTENT】
+    【UI CONTENT】
     App Name: ${softwareName}
-    Screen Name: ${spec.name}
-    ${contentPrompt}
+    Screen: ${spec.name}
+    ${layoutPrompt}
     
-    【DATA INJECTION】
-    - Populate with REALISTIC Chinese data relevant to "${softwareName}".
-    - DO NOT use placeholders like "Lorem Ipsum". Use real names, prices, titles.
-    - Fields to show: ${spec.fields.join(', ')}.
+    【DATA POPULATION (CRITICAL)】
+    - **LANGUAGE**: MUST BE **SIMPLIFIED CHINESE** (简体中文). NO ENGLISH PLACEHOLDERS.
+    - **REALISM**: Use realistic Chinese names, prices (¥), and addresses.
+    - **Fields to Include**: ${spec.fields.join(', ')}.
     
-    【CRITICAL RULES】
-    1. **NO WIREFRAMES**. This must look like a finished product.
-    2. **CHINESE TEXT**. The UI language must be Simplified Chinese.
-    3. **AESTHETICS**: High-end, polished, "Apple Design Award" quality.
+    【RESTRICTIONS】
+    1. **NO DEVICE FRAME**. Do not render a phone or laptop bezel. Just the screen.
+    2. **NO 3D ANGLES**. Front view only.
+    3. **NO SKEUOMORPHISM**. Use modern Flat/Material/iOS design.
     `;
 
     // 4. Execution
@@ -208,28 +205,26 @@ const generateFallbackImage = (title: string, type: 'App' | 'Web'): string => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
     
-    // Modern Gradient Background
-    const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    grd.addColorStop(0, "#e0c3fc");
-    grd.addColorStop(1, "#8ec5fc");
-    ctx.fillStyle = grd;
+    // Clean White Background for Design Draft
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Glass Card
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
-    ctx.shadowBlur = 20;
-    const padding = 100;
-    ctx.roundRect(padding, padding, canvas.width - padding*2, canvas.height - padding*2, 40);
-    ctx.fill();
+    // Wireframe Box
+    ctx.strokeStyle = '#E5E7EB';
+    ctx.lineWidth = 4;
+    const padding = 80;
+    ctx.strokeRect(padding, padding, canvas.width - padding*2, canvas.height - padding*2);
     
-    // Text
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#333';
+    // Title
+    ctx.fillStyle = '#1F2937';
     ctx.font = 'bold 80px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(title, canvas.width / 2, canvas.height / 2);
+    
+    ctx.font = '40px sans-serif';
+    ctx.fillStyle = '#9CA3AF';
+    ctx.fillText('UI Design Placeholder', canvas.width / 2, canvas.height / 2 + 80);
     
     return canvas.toDataURL('image/png').split(',')[1];
 };
