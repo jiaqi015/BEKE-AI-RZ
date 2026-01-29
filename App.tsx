@@ -447,9 +447,9 @@ const App: React.FC = () => {
 
                 {/* Viewport */}
                 <div className="flex-1 relative overflow-hidden">
-                    {activeTab === 'plan' && <div className="absolute inset-0 overflow-y-auto custom-scrollbar pb-32"><PlanView context={context} /></div>}
-                    {activeTab === 'doc' && <div className="absolute inset-0 overflow-y-auto custom-scrollbar pb-32"><DocView context={context} /></div>}
-                    {activeTab === 'code' && <div className="absolute inset-0 flex flex-col"><CodeView context={context} /></div>}
+                    {activeTab === 'plan' && <div className="absolute inset-0 overflow-y-auto custom-scrollbar pb-32"><PlanView context={context} currentStepId={currentStepId} /></div>}
+                    {activeTab === 'doc' && <div className="absolute inset-0 overflow-y-auto custom-scrollbar pb-32"><DocView context={context} currentStepId={currentStepId} /></div>}
+                    {activeTab === 'code' && <div className="absolute inset-0 flex flex-col"><CodeView context={context} currentStepId={currentStepId} /></div>}
                     {activeTab === 'audit' && <div className="absolute inset-0 overflow-y-auto custom-scrollbar"><AuditHistoryViewer history={context.artifacts.auditHistory} /></div>}
                 </div>
             </div>

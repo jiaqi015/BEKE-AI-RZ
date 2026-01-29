@@ -4,10 +4,60 @@ import { PipelineContext } from '../../types';
 
 interface Props {
   context: PipelineContext;
+  currentStepId: number;
 }
 
-export const PlanView: React.FC<Props> = ({ context }) => {
+export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
+  // Loading State (Process Visualization)
   if (!context.factPack) {
+    if (currentStepId >= 1) {
+        return (
+            <div className="p-8 space-y-6 animate-in fade-in duration-700 max-w-5xl mx-auto">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="w-4 h-4 rounded-full bg-purple-500 animate-ping"></div>
+                    <span className="text-sm font-bold text-purple-400 tracking-widest animate-pulse">正在深度解析业务架构...</span>
+                </div>
+                
+                {/* Skeleton: AI Reasoning Box */}
+                <div className="h-40 w-full bg-purple-900/10 border border-purple-500/10 rounded-2xl p-6 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                    <div className="h-3 w-32 bg-purple-500/20 rounded mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="h-2 w-full bg-purple-500/10 rounded"></div>
+                        <div className="h-2 w-[90%] bg-purple-500/10 rounded"></div>
+                        <div className="h-2 w-[80%] bg-purple-500/10 rounded"></div>
+                    </div>
+                </div>
+
+                {/* Skeleton: Flow */}
+                <div className="space-y-4">
+                     <div className="h-3 w-40 bg-zinc-800 rounded"></div>
+                     <div className="flex gap-3">
+                        {[1,2,3,4].map(i => (
+                             <div key={i} className="h-10 w-24 bg-zinc-800/50 rounded-lg animate-pulse" style={{ animationDelay: `${i * 100}ms`}}></div>
+                        ))}
+                     </div>
+                </div>
+
+                {/* Skeleton: Grid */}
+                <div className="grid grid-cols-2 gap-6 mt-8">
+                    <div className="h-32 bg-zinc-900/50 border border-white/5 rounded-2xl p-6">
+                        <div className="h-3 w-24 bg-zinc-800 rounded mb-4"></div>
+                        <div className="flex gap-2 flex-wrap">
+                            {[1,2,3].map(i => <div key={i} className="h-6 w-16 bg-zinc-800 rounded-full"></div>)}
+                        </div>
+                    </div>
+                    <div className="h-32 bg-zinc-900/50 border border-white/5 rounded-2xl p-6">
+                        <div className="h-3 w-24 bg-zinc-800 rounded mb-4"></div>
+                         <div className="flex gap-2 flex-wrap">
+                            {[1,2,3].map(i => <div key={i} className="h-6 w-16 bg-zinc-800 rounded"></div>)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    // Idle State
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-600 space-y-4 opacity-60 select-none">
         <span className="text-[10px] font-medium tracking-[0.2em] uppercase">暂无规划数据</span>

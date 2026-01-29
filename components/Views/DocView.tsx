@@ -4,6 +4,7 @@ import { PipelineContext } from '../../types';
 
 interface Props {
   context: PipelineContext;
+  currentStepId: number;
 }
 
 // 简单的 Markdown 解析器，用于模拟 Word 渲染效果
@@ -64,8 +65,54 @@ const parseInlineStyles = (text: string) => {
   });
 };
 
-export const DocView: React.FC<Props> = ({ context }) => {
+export const DocView: React.FC<Props> = ({ context, currentStepId }) => {
   if (!context.artifacts.userManual) {
+    if (currentStepId >= 3) {
+      // Loading State for Doc Generation
+      return (
+        <div className="p-10 pb-40 flex justify-center bg-[#F3F4F6] dark:bg-[#09090b] h-full overflow-hidden relative">
+           
+           <div className="absolute top-10 flex items-center gap-3 z-10 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></div>
+                <span className="text-xs font-bold text-blue-300">正在撰写第 {Math.floor(Date.now() / 1000) % 5 + 1} 章节...</span>
+           </div>
+
+           <div className="bg-white w-full max-w-[850px] h-[1000px] shadow-2xl relative overflow-hidden animate-in slide-in-from-bottom-10 duration-1000">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gray-100"></div>
+              
+              {/* Animated Cursor & Content */}
+              <div className="p-[80px] space-y-8">
+                  <div className="h-8 w-2/3 bg-gray-100 rounded animate-pulse"></div>
+                  
+                  <div className="space-y-3">
+                      <div className="h-4 w-full bg-gray-50 rounded"></div>
+                      <div className="h-4 w-full bg-gray-50 rounded"></div>
+                      <div className="h-4 w-4/5 bg-gray-50 rounded"></div>
+                  </div>
+
+                  {/* Image Placeholder Skeleton */}
+                  <div className="h-64 w-full bg-gray-50 border-2 border-dashed border-gray-100 rounded flex items-center justify-center relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
+                      <div className="flex flex-col items-center">
+                          <div className="w-12 h-12 rounded-full bg-gray-200 mb-4 animate-pulse"></div>
+                          <div className="h-3 w-32 bg-gray-200 rounded"></div>
+                      </div>
+                  </div>
+
+                  <div className="space-y-3">
+                      {[1,2,3,4,5].map(i => (
+                          <div key={i} className="h-4 bg-gray-50 rounded" style={{ width: `${Math.random() * 40 + 60}%`, animationDelay: `${i*100}ms` }}></div>
+                      ))}
+                  </div>
+              </div>
+
+              {/* Fog overlay to simulate infinite scroll */}
+              <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent"></div>
+           </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-600 space-y-4 opacity-60 select-none">
         <span className="text-[10px] font-medium tracking-[0.2em] uppercase">文档编译中...</span>
