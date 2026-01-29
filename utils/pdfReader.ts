@@ -2,12 +2,13 @@
 import * as pdfjsLib from "pdfjs-dist";
 
 // Define version to match package.json
+// 注意：必须与 package.json 中的 pdfjs-dist 版本完全一致
 const PDF_WORKER_VERSION = '5.4.530';
 
 // Construct CDN URLs
-// We use unpkg for all resources to ensure version alignment and avoid bundler resolution issues.
+// pdfjs-dist v5 构建产物标准文件名为 pdf.worker.mjs (已压缩)，不存在 .min.mjs
 const BASE_CDN = `https://unpkg.com/pdfjs-dist@${PDF_WORKER_VERSION}`;
-const WORKER_URL = `${BASE_CDN}/build/pdf.worker.min.mjs`;
+const WORKER_URL = `${BASE_CDN}/build/pdf.worker.mjs`;
 const CMAP_URL = `${BASE_CDN}/cmaps/`;
 const STANDARD_FONT_DATA_URL = `${BASE_CDN}/standard_fonts/`;
 
@@ -49,8 +50,8 @@ export const readPdfText = async (file: File): Promise<string> => {
     console.error("PDF Parsing Error:", error);
     const msg = error.message || "Unknown error";
     
-    if (msg.includes("Worker") || msg.includes("version")) {
-        throw new Error(`PDF Worker 版本冲突。请尝试清理浏览器缓存。`);
+    if (msg.includes("Worker") || msg.includes("version") || msg.includes(" Setting up fake worker")) {
+        throw new Error(`PDF Worker 版本或网络冲突。请检查网络连接或尝试清理缓存。`);
     }
     throw new Error(`PDF 解析失败: ${msg}`);
   }
