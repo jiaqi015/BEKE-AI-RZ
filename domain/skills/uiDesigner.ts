@@ -4,50 +4,48 @@ import { FactPack, PageSpec } from "../../types";
 import { Type } from "@google/genai";
 
 /**
- * UI 架构师 (Structural Architect)
- * 职责：只负责页面结构的规划，不负责生成图片。
- * 输出：PageSpec 列表 (蓝图)
+ * UI 架构师 (Structural Architect) - V2 Consumer Edition
+ * 职责：规划具有 "App 感" 的页面结构，拒绝 B 端表格思维。
  */
 export const generatePageSpecs = async (facts: FactPack): Promise<PageSpec[]> => {
-  // Dynamic page count target: Baseline 8, plus 2 per module, capped at 15.
-  const targetMin = 8;
-  const targetMax = 15;
   const isApp = facts.softwareType === 'App';
 
-  const navInstruction = isApp 
-    ? "Structure: Mobile App Navigation. Use a 'Bottom Tab Bar' structure (Home, List, Feature, Profile). Page names should be concise (e.g. '首页', '我的')."
-    : "Structure: Web Admin Panel. Use a 'Left Sidebar Menu' structure. Page names can be hierarchical (e.g. '系统管理-用户列表').";
+  // 针对 C 端 App，我们需要更具体的页面类型引导
+  const appDirectives = isApp 
+    ? `
+      **APP STRATEGY (CRITICAL)**:
+      - This is a CONSUMER APP (like TikTok, Taobao, WeChat, Uber).
+      - **FORBIDDEN**: Do NOT generate "User Management Table" or "System Config".
+      - **REQUIRED**: Generate pages like:
+        1. "Home - Feed/Waterfall" (首页-瀑布流/推荐)
+        2. "Detail - Immersive" (详情-沉浸式/视频流)
+        3. "Action - Modal/Sheet" (操作-底部弹窗/支付半屏)
+        4. "Profile - Visual" (我的-视觉化个人中心)
+        5. "Map/LBS" (if relevant)
+      `
+    : `
+      **WEB STRATEGY**:
+      - Modern SaaS Dashboard (Linear/Vercel style), not old Admin panels.
+      - Use "Analytics View", "Kanban Board", "Interactive Graph".
+      `;
   
   const prompt = `
-    Role: Senior UI/UX Architect.
-    Task: Define the UI structure for the software "${facts.softwareNameCandidates[0] || 'System'}" based on its modules.
+    Role: Senior Product Designer (Consumer Apps).
+    Task: Define the UI screen list for "${facts.softwareNameCandidates[0]}".
     
-    Context: Software Type is **${facts.softwareType}**.
-    ${navInstruction}
+    Context:
+    - Type: ${facts.softwareType}
+    - Modules: ${facts.functionalModules.map(m => m.name).join(', ')}
+    
+    ${appDirectives}
 
     Constraint:
-    - Generate strictly between ${targetMin} and ${targetMax} core pages.
-    - STRATEGY: To ensure sufficient documentation volume, verify that for complex modules you create multiple views:
-      1. List/Management View (列表/管理页)
-      2. Add/Edit Form View (新增/配置页)
-      3. Data Analysis/Detail View (统计/详情页)
+    - Generate 8-12 key screens.
+    - **Naming**: Use realistic, short Chinese names (e.g. "首页推荐", "直播间", "订单支付", "个人中心").
+    - **Purpose**: Describe the UX intent, not just function.
     
-    - MUST include: 
-      1. Login Page (登录页面)
-      2. Dashboard/Main Page (主界面)
-      3. Coverage for functional modules: ${facts.functionalModules.map(m => m.name).join(', ')}
-    
-    - Output language: Chinese (Simplified).
-    
-    For each page, define:
-    - id: PAGE_XX (Sequential)
-    - name: Page Title (e.g. 用户管理-列表, 订单配置-新增)
-    - purpose: 1 sentence description.
-    - fields: List of visible fields/columns.
-    - operations: List of buttons/actions.
-    - filename: **Naming Convention**: UI_XX_[ChineseName].png. 
-      - Example: UI_01_登录.png, UI_02_系统首页.png, UI_03_用户管理.png.
-      - **DO NOT** translate to English. Keep the Chinese name in the filename for easy reading.
+    Output Format (JSON):
+    - filename: MUST be UI_XX_[ChineseName].png (e.g. UI_01_首页推荐.png)
   `;
 
   const schema = {
@@ -72,6 +70,12 @@ export const generatePageSpecs = async (facts: FactPack): Promise<PageSpec[]> =>
     required: ["pages"]
   };
 
-  const result = await aiClient.generateStructured<{ pages: PageSpec[] }>(prompt, schema, true);
-  return result.pages;
+  try {
+    const result = await aiClient.generateStructured<{ pages: PageSpec[] }>(prompt, schema, true);
+    return result.pages;
+  } catch (e) {
+    // Fallback if structured generation fails
+    console.error("UI Planner failed, using fallback", e);
+    return [];
+  }
 };
