@@ -155,11 +155,6 @@ export const TerminalLog: React.FC<Props> = ({ logs, stats }) => {
       {/* 头部状态条 */}
       <div className={`px-5 py-4 flex items-center justify-between z-10 border-b backdrop-blur-xl ${isDark ? 'border-white/5 bg-black/60' : 'border-black/5 bg-white/60'}`}>
         <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
-             <div className="w-2.5 h-2.5 rounded-full bg-rose-500/20 border border-rose-500/50"></div>
-             <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20 border border-amber-500/50"></div>
-             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/50"></div>
-          </div>
           <span className={`font-black tracking-[0.2em] text-[10px] uppercase ${isDark ? 'text-zinc-500' : 'text-gray-400'}`}>智慧写作执行记录</span>
         </div>
         
