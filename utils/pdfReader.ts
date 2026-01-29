@@ -1,12 +1,12 @@
 
 import * as pdfjsLib from "pdfjs-dist";
 
-// 【VERSION SYNC】
-// 必须与 package.json 中的版本号 5.4.530 严格对齐
-const PDF_JS_VERSION = '5.4.530';
+// Define version to match package.json
+const PDF_WORKER_VERSION = '5.4.530';
 
-// 配置 Worker - 5.x 版本必须使用 .mjs 扩展名
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDF_JS_VERSION}/build/pdf.worker.mjs`;
+// Use a CDN for the worker to avoid Vite build issues with the worker file.
+// This is the most reliable method for PDF.js v5+ in this specific environment.
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDF_WORKER_VERSION}/build/pdf.worker.min.mjs`;
 
 /**
  * 读取 PDF 文件并提取文本
@@ -18,8 +18,6 @@ export const readPdfText = async (file: File): Promise<string> => {
     // 加载 PDF 文档
     const loadingTask = pdfjsLib.getDocument({ 
         data: arrayBuffer,
-        cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDF_JS_VERSION}/cmaps/`,
-        cMapPacked: true,
     });
     
     const pdf = await loadingTask.promise;
@@ -41,7 +39,7 @@ export const readPdfText = async (file: File): Promise<string> => {
     const msg = error.message || "Unknown error";
     
     if (msg.includes("Worker") || msg.includes("version")) {
-        throw new Error(`PDF Worker 版本冲突 (预期 ${PDF_JS_VERSION})。请尝试清理浏览器缓存。`);
+        throw new Error(`PDF Worker 版本冲突。请尝试清理浏览器缓存。`);
     }
     throw new Error(`PDF 解析失败: ${msg}`);
   }

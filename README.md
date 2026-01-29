@@ -1,20 +1,24 @@
+
 # 陈新软 AI - 部署指南
 
 本项目已适配 Vercel 一键部署。
 
-## 🚀 部署修复方案 (ETARGET Fix)
+## 🚀 部署前必读
 
-如果你遇到 `No matching version found for @google/genai` 报错，请按照以下步骤操作：
+为确保依赖版本完全对齐（特别是 PDF.js Worker 和 Gemini SDK），请在本地开发或部署前执行以下**清洁构建步骤**：
 
-1. **删除旧文件**：在本地删除 `package-lock.json` 和 `node_modules`。
-2. **强制更新**：执行 `npm install --force`。
-3. **推送到远程**：确保 `package.json` 中的 `@google/genai` 值为 `"latest"` 或确定的最新版本。
+```bash
+# 1. 清除旧依赖和锁文件 (必须!)
+rm -rf node_modules package-lock.json
 
-## 🛠️ PDF 环境说明
+# 2. 重新安装 (生成新的 package-lock.json)
+npm install
 
-为了防止 PDF.js Worker 报错，项目采用以下策略：
-- **移除 importmap 中的 pdfjs-dist**：由 Vite 本地打包。
-- **动态 CDN 加载 Worker**：在 `utils/pdfReader.ts` 中根据当前安装版本动态指向 jsDelivr。
+# 3. 构建测试
+npm run build
+```
+
+**注意：** 提交代码时，请务必包含新生成的 `package-lock.json` 文件，Vercel 将依据此文件锁定版本。
 
 ## Vercel 部署配置
 
@@ -25,9 +29,10 @@
 | **Framework Preset** | Vite |
 | **Build Command** | `npm run build` |
 | **Output Directory** | `dist` |
-| **Node.js Version** | 20.x |
+| **Node.js Version** | 22.x (Project Settings -> General -> Node.js Version) |
 
 ### 环境变量
 
-请在 Vercel 项目设置中添加：
+请在 Vercel 项目设置 (Settings -> Environment Variables) 中添加：
+
 - `API_KEY`: 您的 Gemini API 密钥
