@@ -4,29 +4,30 @@ import { FactPack, PageSpec } from "../../types";
 import { Type } from "@google/genai";
 
 /**
- * UI 架构师 (Structural Architect) - V2 Consumer Edition
- * 职责：规划具有 "App 感" 的页面结构，拒绝 B 端表格思维。
+ * UI 架构师 (Structural Architect) - V3 Consumer-First Edition
+ * 职责：规划具有 "App 感" 的页面结构，彻底摒弃 B 端表格思维。
  */
 export const generatePageSpecs = async (facts: FactPack): Promise<PageSpec[]> => {
   const isApp = facts.softwareType === 'App';
 
-  // 针对 C 端 App，我们需要更具体的页面类型引导
+  // 针对 C 端 App，我们需要更具体的页面类型引导，强制使用 C 端术语
   const appDirectives = isApp 
     ? `
-      **APP STRATEGY (CRITICAL)**:
-      - This is a CONSUMER APP (like TikTok, Taobao, WeChat, Uber).
-      - **FORBIDDEN**: Do NOT generate "User Management Table" or "System Config".
-      - **REQUIRED**: Generate pages like:
-        1. "Home - Feed/Waterfall" (首页-瀑布流/推荐)
-        2. "Detail - Immersive" (详情-沉浸式/视频流)
-        3. "Action - Modal/Sheet" (操作-底部弹窗/支付半屏)
-        4. "Profile - Visual" (我的-视觉化个人中心)
-        5. "Map/LBS" (if relevant)
+      **APP DESIGN STRATEGY (CRITICAL)**:
+      - **Context**: This is a consumer-facing mobile app (iOS/Android).
+      - **Style**: High-end, visual, immersive.
+      - **FORBIDDEN**: "Management", "Table", "Grid", "System Config", "Admin".
+      - **REQUIRED PAGE TYPES**:
+        1. **Feed/Discovery**: "首页推荐", "房源列表", "动态圈" (Waterfall/Card layout).
+        2. **Visual Detail**: "详情页", "播放页", "房源档案" (Full screen images).
+        3. **Functional Tool**: "计算器", "地图找房", "智能分析" (Interactive charts/maps).
+        4. **Personal**: "我的", "个人中心" (Visual stats, not lists).
       `
     : `
-      **WEB STRATEGY**:
-      - Modern SaaS Dashboard (Linear/Vercel style), not old Admin panels.
+      **WEB DESIGN STRATEGY**:
+      - Modern SaaS Dashboard (Linear/Vercel/Stripe style).
       - Use "Analytics View", "Kanban Board", "Interactive Graph".
+      - Avoid dense data grids where possible, use "Card Lists".
       `;
   
   const prompt = `
@@ -41,11 +42,12 @@ export const generatePageSpecs = async (facts: FactPack): Promise<PageSpec[]> =>
 
     Constraint:
     - Generate 8-12 key screens.
-    - **Naming**: Use realistic, short Chinese names (e.g. "首页推荐", "直播间", "订单支付", "个人中心").
-    - **Purpose**: Describe the UX intent, not just function.
+    - **Naming**: Use realistic, short Chinese names (e.g. "首页", "房源详情", "智能估价").
+    - **Purpose**: Describe the UX intent (e.g. "Immersive consumption", "Quick action").
+    - **Fields**: List visual elements (e.g. "Cover Image", "Avatar", "Price Badge") not just database columns.
     
     Output Format (JSON):
-    - filename: MUST be UI_XX_[ChineseName].png (e.g. UI_01_首页推荐.png)
+    - filename: MUST be UI_XX_[ChineseName].png (e.g. UI_01_首页.png)
   `;
 
   const schema = {
@@ -74,7 +76,6 @@ export const generatePageSpecs = async (facts: FactPack): Promise<PageSpec[]> =>
     const result = await aiClient.generateStructured<{ pages: PageSpec[] }>(prompt, schema, true);
     return result.pages;
   } catch (e) {
-    // Fallback if structured generation fails
     console.error("UI Planner failed, using fallback", e);
     return [];
   }

@@ -4,143 +4,161 @@ import { PageSpec } from "../../types";
 
 /**
  * ==============================================================================
- * ARCHITECTURE: INTERFACE DESIGNER (Digital Export)
+ * ARCHITECTURE: INTERFACE RENDERER V4 (Super Consistency Edition)
  * ==============================================================================
  * 
  * Philosophy: 
- * Pure Digital Design. No Camera. No Lighting. No Desk.
- * Just the pixels on the screen, exported from Figma.
+ * Consistency is King. All screens for the same app MUST look like siblings.
+ * We enforce this by locking the "Design System" and "Bottom Navigation" globally.
  */
 
-type AppVibe = 'IMMERSIVE_MEDIA' | 'ECOMMERCE_DENSE' | 'SOCIAL_CLEAN' | 'UTILITY_MAP' | 'ENTERPRISE_DASHBOARD';
+interface AppArchetype {
+    id: string;
+    stylePrompt: string;      // The visual vibe (Colors, Fonts, Spacing)
+    tabs: string[];           // The exact labels for the bottom bar
+    activeTabMap: Record<string, string>; // Keywords to map PageName -> TabName
+}
 
-class InterfaceDesigner {
+class DesignSystem {
 
-    static detectVibe(softwareName: string, softwareType: string, pageName: string): AppVibe {
-        const n = (softwareName + pageName).toLowerCase();
+    static getArchetype(softwareName: string, softwareType: string): AppArchetype {
+        const n = softwareName.toLowerCase();
         
-        if (softwareType !== 'App') return 'ENTERPRISE_DASHBOARD';
+        // 1. REAL ESTATE / MAP (e.g. 贝壳/链家/安居客)
+        if (n.match(/map|house|travel|taxi|estate|地图|房产|二手房|租房|出行|位置|档案|估价|居|客/)) {
+            return {
+                id: 'REAL_ESTATE',
+                stylePrompt: `
+        **DESIGN SYSTEM: Modern Real Estate (Beike/Lianjia Style)**
+        - **Palette**: Primary Color #3072F6 (Tech Blue) or #00AE66 (Trust Green). Background #F5F7FA (Light Gray).
+        - **Typography**: Clean, Sans-serif, High legibility.
+        - **Shapes**: Rounded Cards (Radius 12px), Soft Shadows.
+        - **Layout**: Information dense but organized. Card-based lists.
+                `,
+                tabs: ["首页", "房源", "消息", "我的"],
+                activeTabMap: {
+                    "首页": "首页", "Home": "首页", "动态": "首页", "推荐": "首页",
+                    "房源": "房源", "列表": "房源", "地图": "房源", "档案": "房源", "详情": "房源", "搜索": "房源",
+                    "消息": "消息", "聊天": "消息", "咨询": "消息", "通知": "消息",
+                    "我的": "我的", "个人": "我的", "设置": "我的", "计算": "我的"
+                }
+            };
+        }
 
-        // 抖音/直播/视频/沉浸
-        if (n.match(/video|stream|live|douyin|tiktok|视频|直播|沉浸|播放|动态/)) return 'IMMERSIVE_MEDIA';
-        
-        // 淘宝/电商/外卖/密集信息
-        if (n.match(/shop|mall|store|buy|电商|商城|购物|商品|特价|首页/)) return 'ECOMMERCE_DENSE';
-        
-        // 社交/列表/聊天
-        if (n.match(/chat|social|message|friend|微信|社交|消息|通讯录/)) return 'SOCIAL_CLEAN';
+        // 2. IMMERSIVE MEDIA (e.g. 抖音/小红书)
+        if (n.match(/video|stream|live|douyin|tiktok|视频|直播|沉浸|播放|动态|书|视/)) {
+            return {
+                id: 'IMMERSIVE_MEDIA',
+                stylePrompt: `
+        **DESIGN SYSTEM: Immersive Media (TikTok/RedNote Style)**
+        - **Palette**: Dark Mode (Black Background) OR Transparent Overlays.
+        - **Accent**: Neon Red (#FE2C55) or Bright Red.
+        - **Shapes**: Full screen content. Floating buttons.
+        - **Layout**: Edge-to-edge visuals. Minimalist text overlays.
+                `,
+                tabs: ["首页", "朋友", "消息", "我"],
+                activeTabMap: {
+                    "首页": "首页", "推荐": "首页", "播放": "首页", "视频": "首页",
+                    "朋友": "朋友", "关注": "朋友",
+                    "消息": "消息", "私信": "消息", "互动": "消息",
+                    "我": "我", "个人": "我", "作品": "我", "赞过": "我"
+                }
+            };
+        }
 
-        // 地图/房产/打车
-        if (n.match(/map|house|travel|taxi|地图|房产|出行|位置/)) return 'UTILITY_MAP';
+        // 3. E-COMMERCE (e.g. 淘宝/美团)
+        if (n.match(/shop|mall|store|buy|电商|商城|购物|商品|特价|团|购/)) {
+            return {
+                id: 'ECOMMERCE',
+                stylePrompt: `
+        **DESIGN SYSTEM: Vibrant E-Commerce (Taobao/Meituan Style)**
+        - **Palette**: Warm White Background. Primary #FF5000 (Vibrant Orange/Red).
+        - **Shapes**: Rounded edges (8px). Bubbles. Tags.
+        - **Layout**: Masonry grids. High density. Colorful icons.
+                `,
+                tabs: ["首页", "逛逛", "购物车", "我的"],
+                activeTabMap: {
+                    "首页": "首页", "推荐": "首页", "特价": "首页",
+                    "逛逛": "逛逛", "发现": "逛逛", "视频": "逛逛",
+                    "购物车": "购物车", "订单": "购物车", "支付": "购物车",
+                    "我的": "我的", "个人": "我的", "会员": "我的"
+                }
+            };
+        }
 
-        // 默认通用
-        return 'SOCIAL_CLEAN';
+        // 4. DEFAULT / SOCIAL (WeChat Style)
+        return {
+            id: 'SOCIAL_CLEAN',
+            stylePrompt: `
+        **DESIGN SYSTEM: Minimalist Social (WeChat/iOS Style)**
+        - **Palette**: White/Light Gray #EDEDED. Primary #07C160 (WeChat Green) or #007AFF (iOS Blue).
+        - **Shapes**: Standard List Rows. Separator lines.
+        - **Layout**: Linear lists. Top Navigation Bar standard.
+            `,
+            tabs: ["微信", "通讯录", "发现", "我"],
+            activeTabMap: {
+                "微信": "微信", "消息": "微信", "聊天": "微信", "首页": "微信",
+                "通讯录": "通讯录", "联系人": "通讯录", "好友": "通讯录",
+                "发现": "发现", "圈": "发现", "动态": "发现",
+                "我": "我", "个人": "我", "设置": "我", "详情": "我"
+            }
+        };
     }
 
     /**
-     * 1. The Canvas (画布设定)
-     * 定义“设计原稿”的质感，拒绝摄影感
+     * Determine the active tab based on the page name using keyword matching.
      */
-    static getCanvasDirectives(vibe: AppVibe): string {
-        const common = `
-        **RENDER STYLE: DIRECT FIGMA EXPORT**
-        - **View**: Flat 2D, Front-facing, Full Screen. 
-        - **Quality**: Vector-like sharpness, No artifacts, No blur, No lens distortion.
-        - **Frame**: **NO DEVICE FRAME**. Just the UI screen rectangle.
-        - **Background**: The UI fills the entire image canvas.
-        - **Typography**: San Francisco (iOS) or Roboto (Android). Crisp and legible.
+    static getActiveTab(pageName: string, archetype: AppArchetype): string | null {
+        for (const [key, tab] of Object.entries(archetype.activeTabMap)) {
+            if (pageName.includes(key)) return tab;
+        }
+        // Fallback: If "Detail" or "Login" page, maybe no tab is highlighted, or keep the related one?
+        // Let's default to the first tab if it looks like a main landing page, otherwise null (hidden or inactive)
+        if (pageName.includes("登录") || pageName.includes("注册") || pageName.includes("启动")) return null;
+        
+        return archetype.tabs[0]; // Default to Home
+    }
+
+    /**
+     * Generate the specific prompt for the layout of the current page.
+     */
+    static getPageLayoutPrompt(spec: PageSpec, archetype: AppArchetype): string {
+        // Specific logic to enforce standard layouts based on keywords
+        if (spec.name.includes("详情") || spec.name.includes("档案")) {
+            return `
+        **LAYOUT: DETAIL VIEW (Content Focused)**
+        1. **Top**: Standard Nav Bar with Back Button.
+        2. **Hero**: Large Image/Carousel (16:9) at top.
+        3. **Body**: Vertical scrollable content. Title (Bold), Price/Status (Color), Description (Paragraphs).
+        4. **Bottom**: Fixed Action Bar [Contact/Buy Button]. (Tab Bar may be hidden or below).
+            `;
+        }
+        
+        if (spec.name.includes("地图") || spec.name.includes("找房")) {
+             return `
+        **LAYOUT: MAP EXPLORER**
+        1. **Full Screen Map**: Vector map background.
+        2. **Overlays**: Price Bubbles (Pills) scattered on map.
+        3. **Bottom Panel**: Floating Card (white) with list of items.
+             `;
+        }
+
+        if (spec.name.includes("我的") || spec.name.includes("个人")) {
+            return `
+        **LAYOUT: PROFILE CENTER**
+        1. **Header**: User Avatar + Name + ID (Top section with background color).
+        2. **Stats**: Row of numbers (e.g. Viewed, Liked, History).
+        3. **Menu**: Vertical list of options (Wallet, Settings, Help) with chevron icons.
+            `;
+        }
+
+        // Default List/Feed
+        return `
+        **LAYOUT: STANDARD FEED / LIST**
+        1. **Header**: Search bar or Title.
+        2. **Content**: Vertical list or grid of cards.
+        3. **Card Style**: Image + Title + Subtitle + Action.
         `;
-
-        switch (vibe) {
-            case 'IMMERSIVE_MEDIA':
-                return `
-        ${common}
-        - **Theme**: Dark Mode (Transparent overlays on full-screen content).
-        - **Palette**: Neon accents, White text with shadow.
-                `;
-            case 'ECOMMERCE_DENSE':
-                return `
-        ${common}
-        - **Theme**: Light/White Background.
-        - **Palette**: Vibrant (Orange/Red) for CTA and Prices.
-        - **Density**: High. Lots of cards and images.
-                `;
-            case 'ENTERPRISE_DASHBOARD':
-                return `
-        ${common}
-        - **Theme**: Professional Light Grey / White.
-        - **Palette**: Enterprise Blue (#1890ff).
-        - **Structure**: Grid system, precise alignment.
-                `;
-            default:
-                return `
-        ${common}
-        - **Theme**: Clean White / Minimalist.
-        - **Palette**: Brand colors based on context.
-                `;
-        }
-    }
-
-    /**
-     * 2. The Layout (组件布局)
-     * 纯粹描述 UI 结构，去除环境描述
-     */
-    static getLayoutDirectives(vibe: AppVibe, spec: PageSpec, softwareName: string): string {
-        switch (vibe) {
-            case 'IMMERSIVE_MEDIA':
-                return `
-        **LAYOUT: IMMERSIVE FEED (Like Douyin/TikTok)**
-        1. **Background**: A high-quality full-screen real-world photo (Portrait) representing the content.
-        2. **Overlay Controls**:
-           - **Bottom Left**: User Name (@Name), Description (2 lines), Music Info. (White text).
-           - **Right Side**: Vertical column of icons: [Avatar], [Heart], [Comment], [Share].
-        3. **Bottom Nav**: Floating translucent bar: [Home] [Friends] [+] [Inbox] [Me].
-                `;
-
-            case 'ECOMMERCE_DENSE':
-                return `
-        **LAYOUT: SHOPPING WATERFALL (Like Taobao)**
-        1. **Top Bar**: Search input field with "Camera" icon.
-        2. **Banner**: Colorful marketing carousel at top.
-        3. **Grid**: 2-Column Masonry Layout (Product Cards).
-           - Image (Top).
-           - Title (2 lines, Black).
-           - Price (Large Red, e.g., ¥199).
-           - Tags (Small Red badge "Free Shipping").
-        4. **Bottom Nav**: Standard Tab Bar: [Home] [Cart] [Orders] [Me].
-                `;
-
-            case 'UTILITY_MAP':
-                return `
-        **LAYOUT: MAP SERVICE (Like Beike/Uber)**
-        1. **Background**: Full screen map view (Vector map style).
-        2. **Pins**: Multiple location markers with price tags (e.g., "450万") scattered on map.
-        3. **Bottom Card**: A floating white card at the bottom (taking up 30% height).
-           - Content: House/Car details (Thumbnail + Title + Price).
-           - Action Button: "Contact Agent" (Blue).
-                `;
-
-            case 'ENTERPRISE_DASHBOARD':
-                return `
-        **LAYOUT: ADMIN DASHBOARD**
-        1. **Sidebar**: Left vertical menu (Dark blue background).
-        2. **Header**: Top white bar with Breadcrumbs and User Avatar.
-        3. **Content**:
-           - **Stats Row**: 4 Summary Cards (Total Sales, Visits, etc).
-           - **Main Chart**: A large Line/Bar chart in a white card.
-           - **Data Table**: A grid with headers (Name, Status, Date, Action) and 5 rows of data.
-                `;
-
-            default: // SOCIAL_CLEAN
-                return `
-        **LAYOUT: STANDARD LIST (iOS Style)**
-        1. **Header**: Large Title "${spec.name}" (Align Left).
-        2. **List**: Vertical list of items.
-           - Row Style: Icon/Image (Left) + Title/Subtitle (Middle) + Arrow/Status (Right).
-           - Separators: Thin gray lines.
-        3. **Bottom Nav**: Standard Tab Bar with icons.
-                `;
-        }
     }
 }
 
@@ -153,37 +171,58 @@ export const renderUiImage = async (
     signal?: AbortSignal
 ): Promise<string | null> => {
     
-    // 1. Analyze Context
-    const vibe = InterfaceDesigner.detectVibe(softwareName, softwareType, spec.name);
-    const isApp = softwareType === 'App';
-    const aspectRatio = isApp ? "9:16" : "16:9"; // 保持屏幕比例，不带外壳
+    // 1. Analyze Context & Consistency Lock
+    // Always use "App" logic if it has UI, even if user selected something else, to ensure visual preview is nice.
+    const isApp = true; // Force mobile view for consistency in this demo as requested "looks like an app"
+    const aspectRatio = "9:16";
 
-    // 2. Build the "Design Export" Prompt
-    const canvasPrompt = InterfaceDesigner.getCanvasDirectives(vibe);
-    const layoutPrompt = InterfaceDesigner.getLayoutDirectives(vibe, spec, softwareName);
+    const archetype = DesignSystem.getArchetype(softwareName, softwareType);
+    const activeTab = DesignSystem.getActiveTab(spec.name, archetype);
     
+    // 2. Build Consistency Components
+    const tabBarPrompt = activeTab 
+        ? `
+    **BOTTOM TAB BAR (MANDATORY)**
+    - **Position**: Fixed at very bottom.
+    - **Items**: [${archetype.tabs.join('] [')}]
+    - **State**: The tab "${activeTab}" MUST be highlighted (Active Color). Others are Gray.
+    - **Style**: White background, Thin top border, Standard Icons above Text.
+        ` 
+        : `**BOTTOM TAB BAR**: Hidden (Full screen mode or Modal).`;
+
+    const canvasPrompt = `
+    **RENDER MODE: DIGITAL UI SCREENSHOT**
+    - **View**: Orthographic 2D (Front View).
+    - **Cropping**: Crop EXACTLY to the screen edges. NO MARGINS. NO PHONES.
+    - **Style**: Flat, Clean, Figma Export.
+    - **Status Bar**: Include modern status bar at top.
+    `;
+
+    const layoutPrompt = DesignSystem.getPageLayoutPrompt(spec, archetype);
+
     // 3. Construct Final Master Prompt
     const fullPrompt = `
-    Role: Expert UI Designer.
-    Task: Export a **High-Fidelity UI Design Mockup** (Figma Export).
+    Role: Senior UI Designer (Consistency Expert).
+    Task: Create a **Production-Ready UI Screen** for the app "${softwareName}".
     
-    【VISUAL STYLE】
-    ${canvasPrompt}
+    【DESIGN SYSTEM LOCK - MUST FOLLOW】
+    ${archetype.stylePrompt}
     
-    【UI CONTENT】
-    App Name: ${softwareName}
-    Screen: ${spec.name}
+    【NAVIGATION CONSISTENCY】
+    ${tabBarPrompt}
+    
+    【THIS SCREEN SPEC】
+    - **Name**: ${spec.name}
+    - **Purpose**: ${spec.purpose}
+    - **Data**: ${spec.fields.join(', ')}
+    - **Language**: Simplified Chinese (简体中文) ONLY.
+    
     ${layoutPrompt}
     
-    【DATA POPULATION (CRITICAL)】
-    - **LANGUAGE**: MUST BE **SIMPLIFIED CHINESE** (简体中文). NO ENGLISH PLACEHOLDERS.
-    - **REALISM**: Use realistic Chinese names, prices (¥), and addresses.
-    - **Fields to Include**: ${spec.fields.join(', ')}.
-    
     【RESTRICTIONS】
-    1. **NO DEVICE FRAME**. Do not render a phone or laptop bezel. Just the screen.
-    2. **NO 3D ANGLES**. Front view only.
-    3. **NO SKEUOMORPHISM**. Use modern Flat/Material/iOS design.
+    - NO device frames (phones).
+    - NO 3D angles.
+    - NO English placeholders (Use "¥", "张三", "北京市").
     `;
 
     // 4. Execution
