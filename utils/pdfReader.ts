@@ -4,9 +4,15 @@ import * as pdfjsLib from "pdfjs-dist";
 // Define version to match package.json
 const PDF_WORKER_VERSION = '5.4.530';
 
+// Construct CDN URLs
+// We use unpkg for all resources to ensure version alignment and avoid bundler resolution issues.
+const BASE_CDN = `https://unpkg.com/pdfjs-dist@${PDF_WORKER_VERSION}`;
+const WORKER_URL = `${BASE_CDN}/build/pdf.worker.min.mjs`;
+const CMAP_URL = `${BASE_CDN}/cmaps/`;
+const STANDARD_FONT_DATA_URL = `${BASE_CDN}/standard_fonts/`;
+
 // Use a CDN for the worker to avoid Vite build issues with the worker file.
-// This is the most reliable method for PDF.js v5+ in this specific environment.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDF_WORKER_VERSION}/build/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
 
 /**
  * 读取 PDF 文件并提取文本
@@ -16,8 +22,13 @@ export const readPdfText = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     
     // 加载 PDF 文档
+    // Explicitly provide paths to external resources (CMaps, Fonts) to avoid "Invalid URL" errors
+    // when the library attempts to resolve them relative to a restricted import.meta.url
     const loadingTask = pdfjsLib.getDocument({ 
         data: arrayBuffer,
+        cMapUrl: CMAP_URL,
+        cMapPacked: true,
+        standardFontDataUrl: STANDARD_FONT_DATA_URL,
     });
     
     const pdf = await loadingTask.promise;
