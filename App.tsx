@@ -481,7 +481,7 @@ const App: React.FC = () => {
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
                                 </span>
-                                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide min-w-[60px]">{activeStep?.name || 'Processing'}</span>
+                                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide min-w-[60px]">{activeStep?.name || '运行中...'}</span>
                                 
                                 {/* Network Heartbeat Visualizer */}
                                 <div className="flex items-center gap-2 px-3 border-l border-white/10 ml-2 h-4">
@@ -492,19 +492,19 @@ const App: React.FC = () => {
                                          <div className="w-0.5 bg-emerald-500/80 animate-[pulse_1.2s_ease-in-out_infinite] h-2.5 rounded-full"></div>
                                     </div>
                                     <span className="text-[9px] font-mono text-zinc-500">
-                                       LINK_ACTIVE <span className="text-emerald-500 font-bold tabular-nums">{networkLatency}ms</span>
+                                       链路活跃 <span className="text-emerald-500 font-bold tabular-nums">{networkLatency}ms</span>
                                     </span>
                                 </div>
                              </>
                         ) : isFinished ? (
                              <>
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-                                <span className="text-[10px] font-bold text-white uppercase tracking-wide">Ready</span>
+                                <span className="text-[10px] font-bold text-white uppercase tracking-wide">就绪</span>
                              </>
                         ) : (
                              <>
                                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide">Paused</span>
+                                <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide">已暂停</span>
                              </>
                         )}
                     </div>

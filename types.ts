@@ -10,7 +10,8 @@ export enum StepStatus {
   FIXING = 'fixing'
 }
 
-// 新增：Agent 角色定义
+// === AI Native Architecture Core Types ===
+
 export type AgentRole = 'CTO' | 'Architect' | 'Developer' | 'DevOps' | 'Auditor' | 'Analyst';
 
 export interface IAgent {
@@ -20,12 +21,29 @@ export interface IAgent {
 }
 
 /**
+ * Skill 执行的进度回调接口
+ * 解耦 UI 日志与业务逻辑
+ */
+export interface ISkillCallbacks {
+  onLog: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
+  onProgress?: (progress: number) => void;
+}
+
+/**
  * 标准化技能接口 (The Atomic Capability)
+ * TInput: 输入参数类型
+ * TOutput: 输出产物类型
  */
 export interface ISkill<TInput = any, TOutput = any> {
   name: string;
   description: string;
-  execute(input: TInput, context: PipelineContext): Promise<TOutput>;
+  /**
+   * 执行技能
+   * @param input 输入参数
+   * @param context 全局上下文 (Read/Write)
+   * @param callbacks 进度回调钩子
+   */
+  execute(input: TInput, context: PipelineContext, callbacks: ISkillCallbacks): Promise<TOutput>;
 }
 
 /**
@@ -35,8 +53,19 @@ export interface IWorkflowTask {
   id: string;
   name: string;
   agent: IAgent;
-  run: (context: PipelineContext) => Promise<void>; // Side-effect or Context Mutation
+  /**
+   * 任务执行策略
+   * @param retryCount 当前重试次数
+   * @param maxRetries 最大重试次数
+   */
+  retryPolicy?: {
+    maxRetries: number;
+    backoffMs: number;
+  };
+  run: (context: PipelineContext, callbacks: ISkillCallbacks) => Promise<void>;
 }
+
+// ==========================================
 
 export interface PipelineStep {
   id: number;
@@ -54,8 +83,7 @@ export interface LogEntry {
   timestamp: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error' | 'system';
-  // 新增：结构化角色标识
-  role?: AgentRole;
+  role?: AgentRole; 
   metadata?: {
     imageUrl?: string;
     fileCount?: number;

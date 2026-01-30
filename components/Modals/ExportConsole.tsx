@@ -22,14 +22,23 @@ export const ExportConsole: React.FC<Props> = ({ isOpen, onClose, context }) => 
   const [blob, setBlob] = useState<Blob | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   
-  // Visual SOP List
+  // Visual SOP List - Fully Localized
   const [phases, setPhases] = useState<SOPPhase[]>([
       { id: 'INIT', label: '环境初始化', desc: 'Environment Setup', status: 'pending' },
-      { id: 'COMPILE', label: '文档编译引擎', desc: 'MS Word Engine', status: 'pending' },
+      { id: 'COMPILE', label: '文档编译引擎', desc: 'Docx Engine', status: 'pending' },
       { id: 'ASSET', label: '素材注入', desc: 'Asset Injection', status: 'pending' },
       { id: 'AUDIT', label: '合规封存', desc: 'Audit Locking', status: 'pending' },
       { id: 'COMPRESS', label: '压缩打包', desc: 'Zip Archiving', status: 'pending' },
   ]);
+
+  // Translate SOP descriptions for display
+  const phaseDescriptions: Record<string, string> = {
+      'INIT': '加载本地环境配置',
+      'COMPILE': '启动 MS Word 编译引擎',
+      'ASSET': '注入高清 UI 原始素材',
+      'AUDIT': '封存形式审查审计记录',
+      'COMPRESS': '执行最终归档压缩'
+  };
 
   // Start Pipeline when modal opens
   useEffect(() => {
@@ -42,18 +51,19 @@ export const ExportConsole: React.FC<Props> = ({ isOpen, onClose, context }) => 
             
             // Update Phase Status
             setPhases(prev => prev.map(p => {
-                if (p.id === event.step) return { ...p, status: 'active' };
+                const desc = phaseDescriptions[p.id] || p.desc;
+                if (p.id === event.step) return { ...p, status: 'active', desc };
                 // If we passed this step (rough heuristic based on order)
                 const order = ['INIT', 'COMPILE', 'ASSET', 'AUDIT', 'COMPRESS', 'FINISH'];
                 const currentIndex = order.indexOf(event.step);
                 const pIndex = order.indexOf(p.id);
-                if (pIndex < currentIndex) return { ...p, status: 'done' };
-                return p;
+                if (pIndex < currentIndex) return { ...p, status: 'done', desc };
+                return { ...p, desc };
             }));
 
         }).then((resultBlob) => {
             setBlob(resultBlob);
-            setPhases(prev => prev.map(p => ({ ...p, status: 'done' })));
+            setPhases(prev => prev.map(p => ({ ...p, status: 'done', desc: phaseDescriptions[p.id] || p.desc })));
             setIsRunning(false);
         }).catch(err => {
             alert("Export Failed: " + err.message);
@@ -144,8 +154,8 @@ export const ExportConsole: React.FC<Props> = ({ isOpen, onClose, context }) => 
                 <div className="flex-1 bg-black rounded-lg border border-white/10 p-4 font-mono text-[11px] text-zinc-300 overflow-hidden relative mb-6">
                     <div className="absolute inset-0 bg-[linear-gradient(transparent_1px,#000_1px)] bg-[size:100%_2px] pointer-events-none opacity-20"></div>
                     <div className="opacity-90">
-                        {'>'} 系统完整性校验... OK<br/>
-                        {'>'} 正在加载 IndexedDB 本地素材...<br/>
+                        {'>'} 系统完整性校验... 通过<br/>
+                        {'>'} 正在加载本地素材库...<br/>
                         {pipelineState.detail && <><span className="text-blue-400">{'>'} {pipelineState.detail}</span><br/></>}
                         {pipelineState.step !== 'FINISH' && <span className="animate-pulse">_</span>}
                     </div>

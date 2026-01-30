@@ -56,7 +56,7 @@ const StepIndicator: React.FC<Props> = ({ steps, currentStepId }) => {
 
               <div className="flex items-center justify-between mb-1 relative z-10">
                 <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-blue-500' : 'opacity-60'}`}>
-                  序章 0{index + 1}
+                  阶段 0{index + 1}
                 </span>
                 
                 {/* 耗时与消耗展示 */}

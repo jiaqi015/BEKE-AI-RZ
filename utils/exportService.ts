@@ -236,7 +236,7 @@ export class ExportPipeline {
     async run(onEvent: (e: ExportEvent) => void) {
         try {
             // Phase 1: Init
-            onEvent({ step: 'INIT', message: '初始化交付环境...', progress: 5, detail: 'Connecting to Local IndexedDB Repository...' });
+            onEvent({ step: 'INIT', message: '初始化交付环境...', progress: 5, detail: '连接本地 IndexedDB 仓库...' });
             await yieldToMain();
             
             // Phase 2: Compile Docs (Serial execution for stability, but optimized internally)
@@ -254,7 +254,7 @@ export class ExportPipeline {
                     step: 'COMPILE', 
                     message: `正在编译文档: ${fileDef.name}`, 
                     progress: 10 + (i * docStepSize),
-                    detail: fileDef.isCode ? 'Applying Line Numbers & Syntax Styles...' : 'Applying GB/T Standard Styles...'
+                    detail: fileDef.isCode ? '渲染代码行号与高亮样式...' : '应用 GB/T 公文排版标准...'
                 });
                 
                 // Fetch Content text
@@ -275,7 +275,7 @@ export class ExportPipeline {
 
             // Phase 3: Assets (Bulk Archiving)
             const imageKeys = Object.keys(this.context.artifacts.uiImages);
-            onEvent({ step: 'ASSET', message: '归档原始高清素材...', progress: 65, detail: `Archiving ${imageKeys.length} UI Screenshots...` });
+            onEvent({ step: 'ASSET', message: '归档原始高清素材...', progress: 65, detail: `正在打包 ${imageKeys.length} 张 UI 原始截图...` });
             
             const imgFolder = this.root.folder("UI_原始截图");
             if (imgFolder && imageKeys.length > 0) {
@@ -294,7 +294,7 @@ export class ExportPipeline {
             }
 
             // Phase 4: Audit Record
-            onEvent({ step: 'AUDIT', message: '封存审计日志...', progress: 80, detail: 'Generating Audit Report...' });
+            onEvent({ step: 'AUDIT', message: '封存审计日志...', progress: 80, detail: '生成终版合规审计报告...' });
             
             // Generate report from history
             const history = this.context.artifacts.auditHistory;
@@ -321,7 +321,7 @@ export class ExportPipeline {
             await yieldToMain();
 
             // Phase 5: Compress
-            onEvent({ step: 'COMPRESS', message: '最终封包中...', progress: 85, detail: 'High Ratio DEFLATE Compression...' });
+            onEvent({ step: 'COMPRESS', message: '最终封包中...', progress: 85, detail: '执行 DEFLATE 高压缩算法...' });
             
             const content = await this.zip.generateAsync({ 
                 type: 'blob',
@@ -332,7 +332,7 @@ export class ExportPipeline {
                     step: 'COMPRESS', 
                     message: '压缩优化中...', 
                     progress: 85 + (metadata.percent * 0.14),
-                    detail: `Processing ${metadata.currentFile || 'stream'}...`
+                    detail: `正在处理: ${metadata.currentFile || 'stream'}...`
                 });
             });
 

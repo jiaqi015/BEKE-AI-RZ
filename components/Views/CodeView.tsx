@@ -26,8 +26,8 @@ export const CodeView: React.FC<Props> = ({ context, currentStepId }) => {
                     <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                 </div>
                 <div className="space-y-2">
-                    <h3 className="text-green-400 font-mono text-lg font-bold tracking-widest uppercase">Agent Cluster Building Project...</h3>
-                    <p className="text-zinc-500 font-mono text-xs">Architect is designing directory structures...</p>
+                    <h3 className="text-green-400 font-mono text-lg font-bold tracking-widest uppercase">代码工程构建中...</h3>
+                    <p className="text-zinc-500 font-mono text-xs">架构师正在规划目录结构与依赖关系...</p>
                 </div>
                 <div className="flex gap-1 justify-center">
                     {[1,2,3,4,5,6].map(i => <div key={i} className="w-1.5 h-6 bg-green-500/40 animate-bounce" style={{ animationDelay: `${i*150}ms` }}></div>)}
@@ -98,8 +98,8 @@ export const CodeView: React.FC<Props> = ({ context, currentStepId }) => {
                 <span>{currentFile?.language.toUpperCase()}</span>
             </div>
             <div className="flex items-center gap-4">
-                <span>Ln {currentFile?.content.split('\n').length}, Col 1</span>
-                <span>Spaces: 4</span>
+                <span>行 {currentFile?.content.split('\n').length}, 列 1</span>
+                <span>空格: 4</span>
             </div>
          </footer>
       </main>
