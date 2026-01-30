@@ -419,7 +419,7 @@ const App: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="text-[10px] text-red-400 text-center leading-relaxed">
+                        <div className="text-sm font-medium text-red-400 text-center leading-relaxed">
                             <p>使用需保持网络楼梯连接。本工具生成的软著材料仅供娱乐，请根据实际业务自行辨别并核对。</p>
                             <p>全程 AI 编写使用PRO模型，需要大约50分钟，耐心不断网挂机等待</p>
                         </div>
