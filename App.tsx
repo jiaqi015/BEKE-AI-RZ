@@ -269,58 +269,56 @@ const App: React.FC = () => {
 
       {/* 
          LEFT SIDEBAR
-         Fixed width, always visible. Contains branding and steps.
+         Fixed width. Only visible when NOT idle (working state).
+         Initially hidden to provide a centered landing page.
       */}
-      <aside className="w-[280px] flex flex-col h-full shrink-0 z-20 bg-[#09090b]/80 backdrop-blur-xl border-r border-white/5 hidden md:flex relative">
-        {/* Brand Area */}
-        <div className="p-6 pb-4 border-b border-white/5">
-             <div className="flex items-center space-x-3">
-                {/* 
-                   UPDATED LOGO STYLE 
-                   Old: Blue Gradient + White Text
-                   New: Silver Gradient (Zinc) + Black Text
-                */}
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/10 ring-1 ring-white/20">
-                   <span className="text-sm font-black text-black leading-none select-none">新</span>
-                </div>
-                <div>
-                   <div className="text-sm font-bold text-white leading-tight">陈新软 AI</div>
-                   <div className="text-[9px] font-medium text-zinc-300 mt-0.5 tracking-wider uppercase">陈新投资的 AI 软著</div>
-                </div>
-             </div>
-        </div>
+      {!isIdle && (
+        <aside className="w-[280px] flex flex-col h-full shrink-0 z-20 bg-[#09090b]/80 backdrop-blur-xl border-r border-white/5 hidden md:flex relative animate-in slide-in-from-left duration-500">
+          {/* Brand Area */}
+          <div className="p-6 pb-4 border-b border-white/5">
+               <div className="flex items-center space-x-3">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/10 ring-1 ring-white/20">
+                     <span className="text-sm font-black text-black leading-none select-none">新</span>
+                  </div>
+                  <div>
+                     <div className="text-sm font-bold text-white leading-tight">陈新软 AI</div>
+                     <div className="text-[9px] font-medium text-zinc-300 mt-0.5 tracking-wider uppercase">陈新投资的 AI 软著</div>
+                  </div>
+               </div>
+          </div>
 
-        {/* Steps */}
-        <div className="p-6 pt-6 flex-1 overflow-y-auto custom-scrollbar">
-           <h2 className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
-             Agent 思维链
-           </h2>
-           <StepIndicator steps={steps} currentStepId={currentStepId} />
-        </div>
+          {/* Steps */}
+          <div className="p-6 pt-6 flex-1 overflow-y-auto custom-scrollbar">
+             <h2 className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
+               Agent 思维链
+             </h2>
+             <StepIndicator steps={steps} currentStepId={currentStepId} />
+          </div>
 
-        {/* Stats Footer */}
-        <div className="p-4 border-t border-white/5 bg-black/20">
-           {(globalStats.totalTime > 0 || isProcessing) ? (
-                <div className="space-y-3">
-                   <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-300 font-medium">任务耗时</span>
-                        <div className="text-xs font-mono font-bold text-zinc-200">
-                          {globalStats.totalTime > 60000 ? (globalStats.totalTime/60000).toFixed(1) + 'm' : (globalStats.totalTime/1000).toFixed(0) + 's'}
-                        </div>
-                   </div>
-                   <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-zinc-300 font-medium">Tokens</span>
-                      <div className="text-xs font-mono font-bold text-zinc-200">{(globalStats.totalTokens / 1000).toFixed(1)}k</div>
-                   </div>
-                   <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden mt-1">
-                       <div className={`h-full rounded-full transition-all duration-1000 ease-out bg-blue-600`} style={{ width: isFinished ? '100%' : `${Math.min(100, (globalStats.totalTime / ESTIMATED_TOTAL_MS) * 100)}%` }}></div>
-                   </div>
-                </div>
-           ) : (
-             <div className="text-[10px] text-zinc-500 text-center py-2">等待任务启动...</div>
-           )}
-        </div>
-      </aside>
+          {/* Stats Footer */}
+          <div className="p-4 border-t border-white/5 bg-black/20">
+             {(globalStats.totalTime > 0 || isProcessing) ? (
+                  <div className="space-y-3">
+                     <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-zinc-300 font-medium">任务耗时</span>
+                          <div className="text-xs font-mono font-bold text-zinc-200">
+                            {globalStats.totalTime > 60000 ? (globalStats.totalTime/60000).toFixed(1) + 'm' : (globalStats.totalTime/1000).toFixed(0) + 's'}
+                          </div>
+                     </div>
+                     <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-zinc-300 font-medium">Tokens</span>
+                        <div className="text-xs font-mono font-bold text-zinc-200">{(globalStats.totalTokens / 1000).toFixed(1)}k</div>
+                     </div>
+                     <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden mt-1">
+                         <div className={`h-full rounded-full transition-all duration-1000 ease-out bg-blue-600`} style={{ width: isFinished ? '100%' : `${Math.min(100, (globalStats.totalTime / ESTIMATED_TOTAL_MS) * 100)}%` }}></div>
+                     </div>
+                  </div>
+             ) : (
+               <div className="text-[10px] text-zinc-500 text-center py-2">等待任务启动...</div>
+             )}
+          </div>
+        </aside>
+      )}
 
       {/* 
          RIGHT MAIN AREA 
@@ -331,12 +329,27 @@ const App: React.FC = () => {
         {/* === IDLE STATE OVERLAY (The Input Box) === */}
         {isIdle && (
             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 sm:p-12 animate-in fade-in duration-500">
+                
+                {/* Branding - Move to Top Left */}
+                <div className="absolute top-8 left-8 md:top-12 md:left-12">
+                     <div className="flex items-center gap-4 p-3 pr-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors cursor-default">
+                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-400 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.15)] ring-1 ring-white/30">
+                            <span className="text-xl font-black text-black leading-none select-none">新</span>
+                         </div>
+                         <div className="text-left">
+                            <div className="text-base font-bold text-white leading-tight tracking-tight">陈新软 AI</div>
+                            <div className="text-[9px] font-bold text-zinc-400 tracking-[0.15em] uppercase mt-0.5">企业级软著智能编译器</div>
+                         </div>
+                    </div>
+                </div>
+
                 <div className="w-full max-w-2xl animate-in slide-in-from-bottom-8 duration-700">
+                    
                     <div className="text-center mb-8">
                         <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tight mb-3">
                             全球首个软著 Agent
                         </h1>
-                        <p className="text-sm text-zinc-200">
+                        <p className="text-sm text-zinc-300">
                             无论是一个产品点子还是专业的PRD，AI 将自动编译全套申报材料 (代码、文档、申请表)
                         </p>
                     </div>
