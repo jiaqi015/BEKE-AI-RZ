@@ -1,5 +1,5 @@
 
-import { StepStatus, PipelineStep, LogEntry, PipelineContext, RegistrationInfo } from '../../types';
+import { StepStatus, PipelineStep, LogEntry, PipelineContext, RegistrationInfo, AgentRole } from '../../types';
 import { db } from '../../infrastructure/db/projectDB';
 import { expandPrd, analyzePrd } from '../skills/prdAnalyst';
 import { generatePageSpecs } from '../skills/uiDesigner';
@@ -22,6 +22,10 @@ export interface PipelineState {
     isProcessing: boolean;
 }
 
+/**
+ * PipelineEngine: 领域调度核心 (Orchestrator)
+ * 采用 DDD 思想，作为整个 Application Layer 的协调者。
+ */
 class PipelineEngine {
     private state: PipelineState = {
         steps: [
@@ -82,12 +86,13 @@ class PipelineEngine {
         );
     }
 
-    private addLog(message: string, type: LogEntry['type'] = 'info') {
+    private addLog(message: string, type: LogEntry['type'] = 'info', role?: AgentRole) {
         const log: LogEntry = {
             id: Date.now() + Math.random(),
             timestamp: new Date().toLocaleTimeString(),
             message,
-            type
+            type,
+            role
         };
         this.state.logs.push(log);
         this.notify();
@@ -119,12 +124,19 @@ class PipelineEngine {
     }
 
     private async runPipeline() {
-        if (this.state.currentStepId === 1) await this.step1_Analysis();
-        if (this.state.currentStepId === 2) return; 
-        if (this.state.currentStepId === 3) await this.step3_UI();
-        if (this.state.currentStepId === 4) await this.step4_Docs();
-        if (this.state.currentStepId === 5) await this.step5_Code();
-        if (this.state.currentStepId === 6) await this.step6_Audit();
+        // 使用状态机驱动步骤，确保可重放性
+        const pipelineHandlers: Record<number, () => Promise<void>> = {
+            1: () => this.step1_Analysis(),
+            3: () => this.step3_UI(),
+            4: () => this.step4_Docs(),
+            5: () => this.step5_Code(),
+            6: () => this.step6_Audit()
+        };
+
+        while (this.state.isProcessing && pipelineHandlers[this.state.currentStepId]) {
+            await pipelineHandlers[this.state.currentStepId]();
+        }
+        
         this.state.isProcessing = false;
         this.notify();
     }
@@ -160,28 +172,27 @@ class PipelineEngine {
         window.location.reload();
     }
 
+    // --- 各步骤领域逻辑 (解构) ---
+
     private async step1_Analysis() {
         const startTime = Date.now();
         this.updateStep(1, StepStatus.RUNNING);
-        this.addLog("正在召集 [RequirementAnalyst (语义解析 Agent)] 接入原始输入...", "system");
+        this.addLog("启动语义解析集群...", "system", "Analyst");
         
-        const expanded = await expandPrd(this.state.context.prdContent, (msg) => this.addLog(`[Analyst] ${msg}`));
+        const expanded = await expandPrd(this.state.context.prdContent, (msg) => this.addLog(msg, "info", "Analyst"));
         this.state.context.prdContent = expanded;
         
-        this.addLog("正在启动 [BlueprintArchitect (蓝图架构 Agent)] 建立单一真理来源 (SSOT)...");
+        this.addLog("建立业务模型真理来源 (SSOT)...", "info", "Architect");
         const factPack = await analyzePrd(expanded);
         this.state.context.factPack = factPack;
         
-        this.addLog(`[Architect] 顶层设计已固化：Tab 导航锁 [${factPack.navigationDesign.tabs.join(' | ')}]`);
-        this.addLog(`[Architect] 视觉规约锁定：${factPack.navigationDesign.visualTheme.styleType} 模式`);
+        this.addLog(`顶层导航已锁定：[${factPack.navigationDesign.tabs.join(' | ')}]`, "success", "Architect");
 
         const pageSpecs = await generatePageSpecs(factPack);
         this.state.context.pageSpecs = pageSpecs;
 
         const duration = Date.now() - startTime;
         this.updateStep(1, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 4500 });
-        this.addLog("Step 1 归档：业务建模与顶层导航蓝图已同步至全链路 Agent 集群。", "success");
-        
         this.state.currentStepId = 2;
         this.updateStep(2, StepStatus.RUNNING); 
         this.notify();
@@ -190,12 +201,11 @@ class PipelineEngine {
     private async step3_UI() {
         const startTime = Date.now();
         this.updateStep(3, StepStatus.RUNNING);
-        this.addLog("正在召集 [VisualSemanticsArtist (视觉语义 Agent)] 开始艺术编译...", "system");
-        this.addLog("[VisualArtist] 正在从 FactPack 提取导航设计与品牌色，确保强一致性...");
+        this.addLog("启动 UI 艺术编译引擎...", "system", "Architect");
         
         const specs = this.state.context.pageSpecs || [];
         for (const spec of specs) {
-            this.addLog(`[VisualArtist] 正在渲染 [${spec.name}] 界面，强制注入当前活动 Tab 状态...`);
+            this.addLog(`正在渲染 [${spec.name}] 界面...`, "info", "Architect");
             const imgBase64 = await renderUiImage(
                 spec, 
                 this.state.context.registrationInfo!, 
@@ -210,7 +220,6 @@ class PipelineEngine {
         
         const duration = Date.now() - startTime;
         this.updateStep(3, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 8500 });
-        this.addLog("Step 3 归档：UI 视觉产物已完成语义对齐。", "success");
         this.state.currentStepId = 4;
         this.notify();
     }
@@ -218,24 +227,22 @@ class PipelineEngine {
     private async step4_Docs() {
         const startTime = Date.now();
         this.updateStep(4, StepStatus.RUNNING);
-        this.addLog("正在召集 [ComplianceScribe (合规文案 Agent Cluster)] 启动文本构建...", "system");
+        this.addLog("启动合规文案集群...", "system", "Analyst");
 
         const { factPack, registrationInfo, pageSpecs } = this.state.context;
         
-        this.addLog("[Scribe] 正在根据 [BlueprintArchitect] 的导航蓝图校准说明书布局描述...");
+        this.addLog("正在编制项目简介与申请表...", "info", "Analyst");
         const intro = await generateProjectIntroduction(factPack!, registrationInfo!);
-        this.state.context.artifacts.projectIntroduction = await optimizeDocStructure(intro, 'PROJECT_INTRO', (m) => this.addLog(`[DocOptimizer] ${m}`));
+        this.state.context.artifacts.projectIntroduction = await optimizeDocStructure(intro, 'PROJECT_INTRO', (m) => this.addLog(m, "info", "Analyst"));
         
-        this.addLog("[Scribe] 正在生成申请表核心功能描述 (已开启敏感词规避模式)...");
         this.state.context.artifacts.appForm = await generateAppForm(factPack!, registrationInfo!);
         
-        this.addLog("[Scribe] 正在编译用户操作说明书，强制插入 UI 锚点...");
+        this.addLog("正在编制用户说明书并注入 UI 锚点...", "info", "Analyst");
         const manual = await generateUserManual(factPack!, registrationInfo!, pageSpecs!);
-        this.state.context.artifacts.userManual = await optimizeDocStructure(manual, 'USER_MANUAL', (m) => this.addLog(`[DocOptimizer] ${m}`));
+        this.state.context.artifacts.userManual = await optimizeDocStructure(manual, 'USER_MANUAL', (m) => this.addLog(m, "info", "Analyst"));
 
         const duration = Date.now() - startTime;
         this.updateStep(4, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 14000 });
-        this.addLog("Step 4 归档：合规性申报文档已完成逻辑降维与语言润色。", "success");
         this.state.currentStepId = 5;
         this.notify();
     }
@@ -244,38 +251,21 @@ class PipelineEngine {
         const startTime = Date.now();
         this.updateStep(5, StepStatus.RUNNING);
         
-        this.addLog("正在召集 [CodeTaskForce (代码特遣队)] 启动全链路仿真工程合成...", "system");
-        this.addLog("[CTO Agent] 已接入，正在审查技术栈规约与版权注入协议...");
+        this.addLog("召集代码特遣队启动编译...", "system", "CTO");
 
         const { factPack, registrationInfo, pageSpecs } = this.state.context;
-        const selectedLang = registrationInfo?.programmingLanguage[0] || 'Java';
-        
-        this.addLog(`[CTO Agent] 工程技术栈锁死：${selectedLang}。工程蓝图版本：Enterprise_SOP_V4。`);
-        this.addLog("[Architect] 正在设计仿生目录拓扑，注入分层架构规约...");
-        this.addLog("[Implementer] 正在实现 Controller/Service/DAO 核心业务逻辑，注入高密度中文语义注释...");
-        this.addLog("[DevOps] 正在编写基建配置文件与构建脚本...");
-
         const result = await generateSourceCode(
             factPack!, 
             registrationInfo!, 
             pageSpecs!, 
-            (msg) => {
-                // 根据底层反馈关键词路由到不同的 Agent 角色日志
-                if (msg.includes("目录") || msg.includes("蓝图")) this.addLog(`[Architect] ${msg}`);
-                else if (msg.includes("逻辑") || msg.includes("实现")) this.addLog(`[Implementer] ${msg}`);
-                else if (msg.includes("脚本") || msg.includes("环境")) this.addLog(`[DevOps] ${msg}`);
-                else this.addLog(`[CodeSquad] ${msg}`);
-            }
+            (msg, role) => this.addLog(msg, "info", role)
         );
-        
-        this.addLog("[QualityGuard] 正在执行全量源码扫描，校验版权页头一致性并进行行号对齐...");
         
         this.state.context.artifacts.sourceCode = result.fullText;
         this.state.context.artifacts.sourceTree = result.tree;
 
         const duration = Date.now() - startTime;
         this.updateStep(5, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 28000 });
-        this.addLog(`Step 5 归档：[CodeTaskForce] 已完成 ${result.tree.length} 个逻辑闭环仿真文件的编译。`, "success");
         this.state.currentStepId = 6;
         this.notify();
     }
@@ -283,13 +273,13 @@ class PipelineEngine {
     private async step6_Audit() {
         const startTime = Date.now();
         this.updateStep(6, StepStatus.RUNNING);
-        this.addLog("正在召集 [CertificationOfficer (形式审查官 Agent)] 启动 CPCC 准入性审计...", "system");
+        this.addLog("形式审查官接入审计...", "system", "Auditor");
 
         let round = 1;
         let passed = false;
         
         while (round <= 3 && !passed) {
-            this.addLog(`[Officer] 启动第 ${round} 轮深度形式审查扫描...`);
+            this.addLog(`启动第 ${round} 轮深度扫描...`, "info", "Auditor");
             const report = await conductAudit(
                 this.state.context.factPack!, 
                 this.state.context.registrationInfo!, 
@@ -302,30 +292,25 @@ class PipelineEngine {
 
             if (report.passed) {
                 passed = true;
-                this.addLog("[Officer] 审计最终结论：PASSED (符合 CPCC 申报标准)。", "success");
+                this.addLog("审计通过，符合 CPCC 申报标准。", "success", "Auditor");
             } else {
-                this.addLog(`[Officer] 审计未通过 (得分: ${report.score})，正在召集 [AutoRepairBot] 进行紧急修复...`, "warning");
+                this.addLog(`审计未通过 (${report.score})，触发自动修复机...`, "warning", "Auditor");
                 this.updateStep(6, StepStatus.FIXING);
                 
                 const fixResult = await autoFixArtifacts(
                     this.state.context.artifacts, 
                     report, 
                     this.state.context.registrationInfo!,
-                    (m) => this.addLog(`[RepairBot] ${m}`)
+                    (m) => this.addLog(m, "info", "Auditor")
                 );
                 
                 this.state.context.artifacts = fixResult.artifacts;
-                const lastReport = this.state.context.artifacts.auditHistory[this.state.context.artifacts.auditHistory.length - 1];
-                lastReport.fixSummary = fixResult.fixSummary;
-                
-                this.updateStep(6, StepStatus.RUNNING);
                 round++;
             }
         }
 
         const duration = Date.now() - startTime;
         this.updateStep(6, passed ? StepStatus.SUCCESS : StepStatus.WARN, { durationMs: duration, tokenUsage: 18000 });
-        this.addLog("全链路 Agent 集群协作任务结束，交付包已就绪。", passed ? "success" : "warning");
     }
 }
 

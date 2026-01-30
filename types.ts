@@ -10,6 +10,9 @@ export enum StepStatus {
   FIXING = 'fixing'
 }
 
+// 新增：Agent 角色定义
+export type AgentRole = 'CTO' | 'Architect' | 'Developer' | 'DevOps' | 'Auditor' | 'Analyst';
+
 export interface PipelineStep {
   id: number;
   name: string;
@@ -26,8 +29,12 @@ export interface LogEntry {
   timestamp: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error' | 'system';
+  // 新增：结构化角色标识
+  role?: AgentRole;
   metadata?: {
     imageUrl?: string;
+    fileCount?: number;
+    score?: number;
   };
 }
 
@@ -99,10 +106,9 @@ export interface PipelineContext {
   pageSpecs?: PageSpec[];
 }
 
-// 新增：产品导航与视觉规约
 export interface NavigationDesign {
-  tabs: string[];           // 底部导航栏标签
-  activeMapping: Record<string, string>; // 页面名到 Tab 标签的映射关系
+  tabs: string[];
+  activeMapping: Record<string, string>;
   visualTheme: {
     primaryColor: string;
     styleType: 'MAP' | 'FEED' | 'LIST' | 'DASHBOARD';
@@ -110,7 +116,6 @@ export interface NavigationDesign {
   };
 }
 
-// Structured data extracted from PRD
 export interface FactPack {
   softwareNameCandidates: string[];
   softwareType: 'Web' | 'App' | 'Backend' | 'Plugin';
@@ -124,6 +129,5 @@ export interface FactPack {
   roles: string[];
   dataObjects: string[];
   environmentCandidates: string[];
-  // 核心更新：顶层设计规约
   navigationDesign: NavigationDesign; 
 }

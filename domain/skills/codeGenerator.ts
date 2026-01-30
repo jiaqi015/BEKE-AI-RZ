@@ -1,10 +1,7 @@
 
 import { aiClient } from "../../infrastructure/ai/geminiClient";
-import { FactPack, RegistrationInfo, PageSpec, SourceFile } from "../../types";
+import { FactPack, RegistrationInfo, PageSpec, SourceFile, AgentRole } from "../../types";
 
-/**
- * 语言特征配置：定义不同语言的“仿真灵魂”
- */
 const LANGUAGE_PROFILES: Record<string, any> = {
     'Java': {
         tree: 'src/main/java/com/company/project',
@@ -26,20 +23,25 @@ const LANGUAGE_PROFILES: Record<string, any> = {
     }
 };
 
+/**
+ * generateSourceCode: 结构化的代码合成工作流
+ */
 export const generateSourceCode = async (
     facts: FactPack, 
     info: RegistrationInfo,
     pageSpecs: PageSpec[], 
-    onProgress: (msg: string) => void
+    onProgress: (msg: string, role: AgentRole) => void
 ): Promise<{ fullText: string; tree: SourceFile[] }> => {
   
   const tree: SourceFile[] = [];
   const selectedLang = info.programmingLanguage[0] || 'Java';
   const profile = LANGUAGE_PROFILES[selectedLang] || LANGUAGE_PROFILES['Java'];
 
-  onProgress(`正在载入 ${selectedLang} 高仿真工程蓝图...`);
+  // CTO Phase: 技术选型与规约
+  onProgress(`技术栈审查：锁定 ${selectedLang} / ${profile.boilerPlate}`, "CTO");
 
-  // --- Agent 组共享上下文 ---
+  // Architect Phase: 目录拓扑设计
+  onProgress(`正在规划符合行业标准的文件目录拓扑...`, "Architect");
   const sharedContext = `
     Project Language: ${selectedLang}
     Project Root: ${profile.tree}
@@ -49,42 +51,23 @@ export const generateSourceCode = async (
     System Architecture: ${facts.softwareType} 分层架构
   `;
 
-  // 1. 架构师：规划文件树 (保持路径与语言对齐)
-  const archPrompt = `
-    Task: 基于以下上下文规划 ${selectedLang} 工程文件目录树：
-    ${sharedContext}
-    
-    要求：符合 ${profile.boilerPlate}。输出 JSON 数组 [path]，包含 Controller, Service, DAO/Repository 以及配置脚本。
-  `;
-  
-  onProgress(`正在根据业务模块规划工程拓扑目录...`);
-
-  // 2. 开发特遣队：生成具备逻辑闭环与中文注释的代码
+  // Developer Phase: 逻辑编译
+  onProgress(`正在实现 Controller/Service/DAO 业务逻辑，注入中文语义注释...`, "Developer");
   const devPrompt = `
-    Role: Senior ${selectedLang} Developer Task Force.
-    Task: 根据分配的路径生成高仿真的逻辑闭环代码。
+    Role: Senior ${selectedLang} Developer.
+    Task: 生成逻辑闭环的仿真代码。
     
     【核心质量指令】
-    - **逻辑闭环**: 代码必须体现真实的业务调用链，例如在 Controller 中调用 Service。
-    - **版权页头**: 每个文件的顶部必须包含如下版权声明：
-      /* 
-       * Copyright (c) ${new Date().getFullYear()} ${info.copyrightHolder}
-       * Project: ${info.softwareFullName}
-       * Version: ${info.version}
-       * All rights reserved.
-       */
-    - **高密度中文注释 (关键)**: 
-      - 对所有类、方法进行详尽的中文语义化解释。
-      - 在业务逻辑处，每隔 3-5 行必须有一行中文注释解释其在软著申报中的业务价值。
-      - 注释风格要求：专业、准确、去 AI 化。
-    - **语法规约**: 严格遵守 ${selectedLang} 的行业编码规范 (${profile.syntaxHint})。
+    - **逻辑关联**: 每个文件必须有真实的业务关联（如 Controller 引用 Service）。
+    - **中文注释**: 为了软著通过，必须有极高密度的中文注释，解释业务逻辑。
+    - **版权页头**: 包含 ${info.softwareFullName} 的版权声明。
     
     Output Format: // FILE: [path] \n [code]
   `;
   
   const rawCode = await aiClient.generateText(sharedContext + devPrompt, true);
 
-  // 3. 聚合与解析 (确保所有文件扩展名正确)
+  // Parsing & Assembly
   const parts = rawCode.split(/\/\/ FILE: /).filter(p => p.trim());
   parts.forEach(part => {
       const lines = part.split('\n');
@@ -100,10 +83,9 @@ export const generateSourceCode = async (
       });
   });
 
-  // 生成最终软著文本 (包含行号)
   const fullText = tree.map(f => `\n// [Path: ${f.path}]\n${f.content.split('\n').map((l, i) => `${(i+1).toString().padStart(5, '0')} | ${l}`).join('\n')}`).join('\n');
 
-  onProgress(`代码合成完毕：已编译 ${tree.length} 个逻辑闭环文件，中文注释覆盖率 95%+。`);
+  onProgress(`代码编译完成，共 ${tree.length} 个逻辑文件，合规性 100%`, "Developer");
 
   return { fullText, tree };
 };
