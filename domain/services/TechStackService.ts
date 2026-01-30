@@ -8,7 +8,11 @@ import { FactPack, RegistrationInfo } from "../../types";
  */
 export class TechStackService {
   
-  static inferDefaults(factPack: FactPack): Partial<RegistrationInfo> {
+  static inferDefaults(factPack: FactPack | null): Partial<RegistrationInfo> {
+    // 防御性检查：如果没有 FactPack，返回空对象防止崩溃
+    // 此处修复了 Uncaught TypeError: Cannot read properties of null
+    if (!factPack) return {};
+
     const type = factPack.softwareType;
     const isJava = type === 'Backend';
     const isApp = type === 'App';
@@ -56,12 +60,12 @@ export class TechStackService {
       version: 'V1.0.0',
       completionDate: new Date().toISOString().split('T')[0],
       copyrightHolder: '研发技术部',
-      devHardwareEnv: defaults.devHardwareEnv!,
-      runHardwareEnv: defaults.runHardwareEnv!,
-      devSoftwareEnv: defaults.devSoftwareEnv!,
-      runSoftwareEnv: defaults.runSoftwareEnv!,
-      devTools: defaults.devTools!,
-      programmingLanguage: defaults.programmingLanguage!,
+      devHardwareEnv: defaults.devHardwareEnv || '',
+      runHardwareEnv: defaults.runHardwareEnv || '',
+      devSoftwareEnv: defaults.devSoftwareEnv || '',
+      runSoftwareEnv: defaults.runSoftwareEnv || '',
+      devTools: defaults.devTools || [],
+      programmingLanguage: defaults.programmingLanguage || [],
       sourceLineCount: '35000',
       isCollaboration: false,
     };

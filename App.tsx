@@ -433,9 +433,9 @@ const App: React.FC = () => {
             <div className="w-full md:w-[35%] h-[40%] md:h-full border-b md:border-b-0 md:border-r border-white/5 bg-[#0C0C0E] relative z-10">
                 <div className="h-full flex flex-col">
                     <div className="flex-1 relative min-h-0">
-                       {showGapFiller ? (
+                       {showGapFiller && context.factPack ? (
                            <div className="absolute inset-0 z-20 overflow-y-auto bg-black/80 backdrop-blur-md p-6">
-                               <GapFiller factPack={context.factPack!} onSubmit={submitGapInfo} />
+                               <GapFiller factPack={context.factPack} onSubmit={submitGapInfo} />
                            </div>
                        ) : (
                            <TerminalLog logs={logs} stats={globalStats} />
