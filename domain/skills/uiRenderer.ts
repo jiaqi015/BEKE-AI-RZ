@@ -14,10 +14,14 @@ export const renderUiImage = async (
 
     // 2. 匹配当前页面应高亮的 Tab
     let activeTab = tabs[tabs.length - 1]; // 默认“我的”
-    for (const [key, tab] of Object.entries(activeMapping)) {
-        if (spec.name.includes(key)) {
-            activeTab = tab;
-            break;
+    
+    // Updated logic for Array-based activeMapping
+    if (activeMapping && Array.isArray(activeMapping)) {
+        for (const mapping of activeMapping) {
+            if (spec.name.includes(mapping.pageKeyword)) {
+                activeTab = mapping.tabName;
+                break;
+            }
         }
     }
 

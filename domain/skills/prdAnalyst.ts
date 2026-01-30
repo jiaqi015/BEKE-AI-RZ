@@ -28,8 +28,8 @@ export const analyzePrd = async (prdContent: string): Promise<FactPack> => {
     ${prdContent}
     
     【Navigation & Visual Design Instructions】
-    1. **Tabs Design**: For the Bottom Navigation Bar, design 4 concise Chinese labels (e.g., "首页", "找房", "消息", "我的"). DO NOT use generic placeholders.
-    2. **Visual Mapping**: Create a mapping showing which screens (by name) belong to which Tab.
+    1. **Tabs Design**: For the Bottom Navigation Bar, design 4 concise Chinese labels (e.g. "首页", "找房", "消息", "我的").
+    2. **Visual Mapping**: Map keywords (e.g. "Detail", "List") to specific Tabs.
     3. **Theme Selection**: Determine if the app is 'MAP' (map-centric), 'FEED' (social/media), 'LIST' (transactional), or 'DASHBOARD' (enterprise).
     
     Output strictly in **Chinese (Simplified)**.
@@ -62,7 +62,18 @@ export const analyzePrd = async (prdContent: string): Promise<FactPack> => {
         type: Type.OBJECT,
         properties: {
           tabs: { type: Type.ARRAY, items: { type: Type.STRING } },
-          activeMapping: { type: Type.OBJECT, description: "Mapping from partial page names to tabs" },
+          // FIX: Changed from OBJECT to ARRAY to avoid "empty properties" error in Gemini API
+          activeMapping: { 
+            type: Type.ARRAY, 
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                pageKeyword: { type: Type.STRING },
+                tabName: { type: Type.STRING }
+              },
+              required: ["pageKeyword", "tabName"]
+            }
+          },
           visualTheme: {
             type: Type.OBJECT,
             properties: {

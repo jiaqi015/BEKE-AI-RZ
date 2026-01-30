@@ -162,7 +162,8 @@ export interface PipelineContext {
 
 export interface NavigationDesign {
   tabs: string[];
-  activeMapping: Record<string, string>;
+  // UPDATED: Changed from Record<string,string> to Array for better AI schema compatibility
+  activeMapping: { pageKeyword: string; tabName: string }[];
   visualTheme: {
     primaryColor: string;
     styleType: 'MAP' | 'FEED' | 'LIST' | 'DASHBOARD';
