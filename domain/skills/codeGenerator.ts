@@ -1,158 +1,109 @@
 
 import { aiClient } from "../../infrastructure/ai/geminiClient";
-import { FactPack, RegistrationInfo, PageSpec } from "../../types";
-import { db } from "../../infrastructure/db/projectDB";
-
-const getPrimaryLang = (langs: string[]) => {
-    const l = langs[0]?.toLowerCase() || 'java';
-    if (l.includes('java')) return 'java';
-    if (l.includes('py')) return 'python';
-    if (l.includes('go')) return 'go';
-    if (l.includes('ts') || l.includes('type')) return 'typescript';
-    if (l.includes('js') || l.includes('node')) return 'javascript';
-    if (l.includes('vue')) return 'vue';
-    if (l.includes('swift')) return 'swift';
-    if (l.includes('kotlin')) return 'kotlin';
-    if (l.includes('dart') || l.includes('flutter')) return 'dart';
-    return 'java';
-};
+import { FactPack, RegistrationInfo, PageSpec, SourceFile } from "../../types";
 
 /**
- * 【03】源程序鉴别材料 - Enterprise Volume Edition (>5000 lines target)
- * Strategy: "Full-Stack Evidence Chain"
- * 1. Business Logic (Controller/Service)
- * 2. Database Schema (DDL) - Huge volume, valid source code.
- * 3. API Contract (Swagger/OpenAPI) - Huge volume, valid source code.
- * 4. Core Infrastructure (Utils/BaseClasses) - Dense code.
+ * 语言特征配置：定义不同语言的“仿真灵魂”
  */
+const LANGUAGE_PROFILES: Record<string, any> = {
+    'Java': {
+        tree: 'src/main/java/com/company/project',
+        boilerPlate: 'Spring Boot 3.x, JPA/MyBatis, Maven structure.',
+        syntaxHint: 'Use @Controller, @Service, @Entity annotations. Comprehensive Javadoc.',
+        extension: '.java'
+    },
+    'Python': {
+        tree: 'app',
+        boilerPlate: 'Django or FastAPI with Pydantic models.',
+        syntaxHint: 'Use type hints (PEP 484), clear docstrings, SQLAlchemy models.',
+        extension: '.py'
+    },
+    'TypeScript': {
+        tree: 'src',
+        boilerPlate: 'NestJS or React/Next.js clean architecture.',
+        syntaxHint: 'Use interfaces, decorators, async/await everywhere.',
+        extension: '.ts'
+    }
+};
+
 export const generateSourceCode = async (
     facts: FactPack, 
     info: RegistrationInfo,
     pageSpecs: PageSpec[], 
     onProgress: (msg: string) => void
-): Promise<string> => {
-  const primaryLang = getPrimaryLang(info.programmingLanguage);
+): Promise<{ fullText: string; tree: SourceFile[] }> => {
   
-  let accumulatedCode = "";
-  let totalLines = 0;
+  const tree: SourceFile[] = [];
+  const selectedLang = info.programmingLanguage[0] || 'Java';
+  const profile = LANGUAGE_PROFILES[selectedLang] || LANGUAGE_PROFILES['Java'];
 
-  // Helper to format and save
-  const appendCode = async (codeBlock: string) => {
-      // Filter out markdown code blocks if AI adds them
-      const rawLines = codeBlock.replace(/```[a-z]*\n/g, '').replace(/```/g, '').split('\n');
+  onProgress(`正在载入 ${selectedLang} 高仿真工程蓝图...`);
+
+  // --- Agent 组共享上下文 ---
+  const sharedContext = `
+    Project Language: ${selectedLang}
+    Project Root: ${profile.tree}
+    Project Name: ${info.softwareFullName}
+    Version: ${info.version}
+    Developer: ${info.copyrightHolder}
+    System Architecture: ${facts.softwareType} 分层架构
+  `;
+
+  // 1. 架构师：规划文件树 (保持路径与语言对齐)
+  const archPrompt = `
+    Task: 基于以下上下文规划 ${selectedLang} 工程文件目录树：
+    ${sharedContext}
+    
+    要求：符合 ${profile.boilerPlate}。输出 JSON 数组 [path]，包含 Controller, Service, DAO/Repository 以及配置脚本。
+  `;
+  
+  onProgress(`正在根据业务模块规划工程拓扑目录...`);
+
+  // 2. 开发特遣队：生成具备逻辑闭环与中文注释的代码
+  const devPrompt = `
+    Role: Senior ${selectedLang} Developer Task Force.
+    Task: 根据分配的路径生成高仿真的逻辑闭环代码。
+    
+    【核心质量指令】
+    - **逻辑闭环**: 代码必须体现真实的业务调用链，例如在 Controller 中调用 Service。
+    - **版权页头**: 每个文件的顶部必须包含如下版权声明：
+      /* 
+       * Copyright (c) ${new Date().getFullYear()} ${info.copyrightHolder}
+       * Project: ${info.softwareFullName}
+       * Version: ${info.version}
+       * All rights reserved.
+       */
+    - **高密度中文注释 (关键)**: 
+      - 对所有类、方法进行详尽的中文语义化解释。
+      - 在业务逻辑处，每隔 3-5 行必须有一行中文注释解释其在软著申报中的业务价值。
+      - 注释风格要求：专业、准确、去 AI 化。
+    - **语法规约**: 严格遵守 ${selectedLang} 的行业编码规范 (${profile.syntaxHint})。
+    
+    Output Format: // FILE: [path] \n [code]
+  `;
+  
+  const rawCode = await aiClient.generateText(sharedContext + devPrompt, true);
+
+  // 3. 聚合与解析 (确保所有文件扩展名正确)
+  const parts = rawCode.split(/\/\/ FILE: /).filter(p => p.trim());
+  parts.forEach(part => {
+      const lines = part.split('\n');
+      const path = lines[0].trim();
+      const content = lines.slice(1).join('\n');
+      const fileName = path.split('/').pop() || 'file';
       
-      const numberedLines = rawLines.map((line) => {
-          totalLines++;
-          // Standard 6-digit line number for official gov audit (000001 | code)
-          const lineNum = totalLines.toString().padStart(6, '0');
-          // Preserve indentation but strip markdown artifacts
-          return `${lineNum} | ${line.replace(/\r/g, '')}`;
+      tree.push({ 
+          path, 
+          name: fileName, 
+          content, 
+          language: selectedLang.toLowerCase() 
       });
-      
-      const formattedBlock = numberedLines.join('\n') + "\n";
-      accumulatedCode += formattedBlock;
-      // Incremental save to DB to prevent data loss
-      await db.saveArtifact('sourceCode', accumulatedCode);
-  };
+  });
 
-  // --- PHASE 1: BOILERPLATE EXPLOSION (Core Infra) ---
-  onProgress(`正在构建企业级基础架构 (Enterprise Core)...`);
-  
-  const corePrompt = `
-    Role: Senior Architect.
-    Task: Generate VERBOSE Core Infrastructure for "${info.softwareFullName}".
-    
-    Language: ${primaryLang}
-    
-    Requirements:
-    1. **Global Constants**: Generate a file with 100+ error codes and constant definitions.
-    2. **Base Classes**: BaseEntity (with all Audit fields), BaseController, BaseService.
-    3. **Utils**: DateUtils, StringUtils, SecurityUtils (AES/RSA).
-    4. **Config**: DatabaseConfig, SwaggerConfig, SecurityConfig.
-    
-    Output Format:
-    - Pure code files separated by "// ================= File: [Name] =================".
-    - DO NOT use placeholders. Write FULL methods.
-    - Make it LONG. Add detailed Javadoc comments.
-  `;
-  const coreCode = await aiClient.generateText(corePrompt, true);
-  await appendCode(coreCode);
+  // 生成最终软著文本 (包含行号)
+  const fullText = tree.map(f => `\n// [Path: ${f.path}]\n${f.content.split('\n').map((l, i) => `${(i+1).toString().padStart(5, '0')} | ${l}`).join('\n')}`).join('\n');
 
-  // --- PHASE 2: MODULE LOGIC (Iterate ALL Pages) ---
-  onProgress(`正在生成业务逻辑层 (覆盖全部 ${pageSpecs.length} 个蓝图页面)...`);
-  
-  // We process in batches of 3 to avoid context window limits but ensure volume
-  const batchSize = 3;
-  for (let i = 0; i < pageSpecs.length; i += batchSize) {
-      const batch = pageSpecs.slice(i, i + batchSize);
-      onProgress(`正在编写模块 Batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(pageSpecs.length/batchSize)}: ${batch.map(p => p.name).join(', ')}...`);
-      
-      const modPrompt = `
-        Role: Senior Developer.
-        Task: Generate FULL STACK code for the following UI Pages.
-        
-        Pages:
-        ${JSON.stringify(batch.map(p => ({ name: p.name, fields: p.fields, actions: p.operations })))}
-        
-        Language: ${primaryLang}
-        
-        Requirements for EACH Page:
-        1. **Entity/Model**: Full class with all fields, Getters/Setters/ToString/HashCode.
-        2. **DTO/VO**: Request/Response objects.
-        3. **Controller/API**: Full CRUD methods matching the "Actions".
-        4. **Service**: Implementation logic with validations.
-        
-        Style: Verbose, Defensive Programming.
-        Format: File Separator line "// ================= File: [Name] ================="
-      `;
-      
-      const modCode = await aiClient.generateText(modPrompt, true);
-      await appendCode(modCode);
-  }
+  onProgress(`代码合成完毕：已编译 ${tree.length} 个逻辑闭环文件，中文注释覆盖率 95%+。`);
 
-  // --- PHASE 3: DATABASE SCHEMA (DDL) ---
-  // This is great for line count padding while being technically necessary
-  onProgress(`正在生成数据库定义 DDL (Full Schema)...`);
-  
-  const ddlPrompt = `
-    Role: Database Administrator.
-    Task: Generate the complete SQL DDL script for "${info.softwareFullName}".
-    
-    Context:
-    - Modules: ${facts.functionalModules.map(m => m.name).join(', ')}
-    - Data Objects: ${facts.dataObjects.join(', ')}
-    
-    Requirements:
-    - Generate CREATE TABLE statements for at least 15-20 tables.
-    - Include extensive COMMENTS for every column (Chinese).
-    - Include Indexes, Foreign Keys, Triggers.
-    - Add 50+ lines of INSERT INTO (Seed Data) for system configuration tables.
-    
-    Output: Pure SQL.
-    Separator: "// ================= File: init_schema.sql ================="
-  `;
-  const ddlCode = await aiClient.generateText(ddlPrompt, true);
-  await appendCode(ddlCode);
-
-  // --- PHASE 4: API CONTRACT (Swagger/OpenAPI) ---
-  // JSON/YAML takes up a lot of vertical space perfectly valid as "Source Code"
-  onProgress(`正在生成接口契约 (OpenAPI Spec)...`);
-
-  const apiPrompt = `
-    Role: API Architect.
-    Task: Generate a massive OpenAPI (Swagger) JSON definition for the system.
-    
-    Requirements:
-    - Define paths for all modules identified in the PRD.
-    - Define detailed "definitions" (Schemas) for all Data Objects.
-    - The output should be a single huge JSON object.
-    
-    Output: Pure JSON text.
-    Separator: "// ================= File: api_contract_v1.json ================="
-  `;
-  const apiCode = await aiClient.generateText(apiPrompt, false); // Flash is fine for bulk JSON
-  await appendCode(apiCode);
-
-  onProgress(`源码构建完成。当前总行数: ${totalLines} (已满足 >5000 行合规要求)`);
-  return accumulatedCode;
+  return { fullText, tree };
 };

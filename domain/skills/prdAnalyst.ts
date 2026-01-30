@@ -4,132 +4,42 @@ import { FactPack } from "../../types";
 import { Type } from "@google/genai";
 
 /**
- * Smart Intent Analysis
- * Determine if the user input is a raw idea (needs research) or a structured spec (needs strict adherence).
+ * 扩展原始需求为详细 PRD
  */
-const analyzeIntent = async (input: string): Promise<{ needsResearch: boolean; reasoning: string }> => {
-  // Heuristic check first to save tokens
-  if (input.length > 800 && (input.includes('模块') || input.includes('功能') || input.includes('表结构'))) {
-      return { needsResearch: false, reasoning: "Input appears to be a detailed PRD based on length and keywords." };
-  }
-
+export const expandPrd = async (input: string, onProgress: (msg: string) => void): Promise<string> => {
+  onProgress("正在通过 AI 扩展产品创意为详尽 PRD...");
   const prompt = `
-    Role: Senior Product Manager (Gatekeeper).
-    Task: Analyze the user's input to decide if we need External Google Search to expand it.
+    你是一名资深产品架构师。
+    请将以下简略的需求描述或产品点子扩展为一份完整的、具备申报价值的 PRD 文档。
+    要求包含：项目背景、用户角色、详细功能模块说明、核心业务流程逻辑、系统非功能性需求。
     
-    User Input:
-    """
-    ${input.substring(0, 2000)}
-    """
-    
-    Criteria for "needsResearch = true":
-    - Input is vague (e.g. "I want a CRM").
-    - Input lacks specific functional lists.
-    - Input is just a concept.
-    
-    Criteria for "needsResearch = false":
-    - Input is already a detailed feature list or PRD.
-    - Input contains specific database fields or API definitions.
-    - SEARCHING WOULD ADD NOISE to this perfect input.
-    
-    Output JSON.
+    原始输入：
+    ${input}
   `;
-
-  const schema = {
-      type: Type.OBJECT,
-      properties: {
-          needsResearch: { type: Type.BOOLEAN },
-          reasoning: { type: Type.STRING }
-      },
-      required: ["needsResearch", "reasoning"]
-  };
-
-  try {
-      return await aiClient.generateStructured(prompt, schema, false); // Use Flash for speed
-  } catch {
-      return { needsResearch: true, reasoning: "Fallback to safety" };
-  }
-};
-
-/**
- * Step 0: Research & Expansion (Adaptive)
- */
-export const expandPrd = async (originalInput: string, onLog?: (msg: string) => void): Promise<string> => {
-  const log = (msg: string) => onLog && onLog(msg);
-
-  // 1. Adaptive Check
-  log(`正在评估输入完整度...`);
-  const intent = await analyzeIntent(originalInput);
-  
-  let detailedContext = "";
-
-  if (intent.needsResearch) {
-      log(`💡 识别为概念性需求 (${intent.reasoning}) -> 启动联网调研...`);
-      
-      const researchPrompt = `
-        I want to build a software system about: "${originalInput}".
-        Please use Google Search to find:
-        1. The core functional modules of similar top-tier products in the market.
-        2. The standard business workflows in this industry.
-        3. Typical user roles.
-        
-        Synthesize this into a "Research Summary" in Chinese.
-      `;
-      
-      const researchResult = await aiClient.generateTextWithSearch(researchPrompt);
-      if (researchResult.sources.length > 0) {
-          log(`已参考: ${researchResult.sources.slice(0, 2).join(', ')}...`);
-      }
-      detailedContext = `Industry Research:\n${researchResult.text}`;
-  } else {
-      log(`🎯 识别为详细规格说明 (${intent.reasoning}) -> 跳过搜索，保持原始设计纯度。`);
-      detailedContext = "User provided a detailed PRD. DO NOT Hallucinate new features. STICK TO THE INPUT.";
-  }
-
-  // 2. Synthesis Phase
-  const synthesisPrompt = `
-    Role: Senior Product Manager (CPO Level).
-    Task: Create a professional Product Requirement Document (PRD) based on the user idea.
-    
-    User Idea: "${originalInput}"
-    Context: ${detailedContext}
-    
-    Constraint:
-    - **Language**: Chinese (Simplified) ONLY. 
-    - **Realism**: Use the research data (if available) to populate details.
-    
-    Structure Requirements (Markdown):
-    1. **Project Background** (200 words).
-    2. **User Roles**: 3-4 personas.
-    3. **Functional Modules**: Break down into at least 6 distinct modules.
-    4. **Core Business Process**: Step-by-step workflow.
-    5. **Data Structures**: Key entities.
-    6. **Non-Functional Requirements**.
-    
-    Tone: Professional, Dense, "Enterprise-Ready".
-  `;
-  
-  return await aiClient.generateText(synthesisPrompt, true);
+  return await aiClient.generateText(prompt, true);
 };
 
 export const analyzePrd = async (prdContent: string): Promise<FactPack> => {
   const prompt = `
-    Role: Senior System Analyst & Architect.
-    Task: Deconstruct the following *Expanded* Product Requirement Document (PRD) into a strict "Fact Pack".
+    Role: Senior System Architect & UI UX Director.
+    Task: Deconstruct the PRD into a strict "Fact Pack" AND design the software's navigation blueprint.
     
     PRD CONTENT:
     ${prdContent}
     
-    Analysis Rules:
-    - Infer potential technical stack (Environment Candidates).
-    - Output strictly in **Chinese (Simplified)**.
+    【Navigation & Visual Design Instructions】
+    1. **Tabs Design**: For the Bottom Navigation Bar, design 4 concise Chinese labels (e.g., "首页", "找房", "消息", "我的"). DO NOT use generic placeholders.
+    2. **Visual Mapping**: Create a mapping showing which screens (by name) belong to which Tab.
+    3. **Theme Selection**: Determine if the app is 'MAP' (map-centric), 'FEED' (social/media), 'LIST' (transactional), or 'DASHBOARD' (enterprise).
+    
+    Output strictly in **Chinese (Simplified)**.
   `;
 
   const schema = {
     type: Type.OBJECT,
     properties: {
       softwareNameCandidates: { type: Type.ARRAY, items: { type: Type.STRING } },
-      softwareType: { type: Type.STRING, description: "One of: Web, App, Backend, Plugin" },
+      softwareType: { type: Type.STRING },
       hasUi: { type: Type.BOOLEAN },
       functionalModules: {
         type: Type.ARRAY,
@@ -146,9 +56,27 @@ export const analyzePrd = async (prdContent: string): Promise<FactPack> => {
       businessFlow: { type: Type.STRING },
       roles: { type: Type.ARRAY, items: { type: Type.STRING } },
       dataObjects: { type: Type.ARRAY, items: { type: Type.STRING } },
-      environmentCandidates: { type: Type.ARRAY, items: { type: Type.STRING } }
+      environmentCandidates: { type: Type.ARRAY, items: { type: Type.STRING } },
+      // 顶层设计规约 Schema
+      navigationDesign: {
+        type: Type.OBJECT,
+        properties: {
+          tabs: { type: Type.ARRAY, items: { type: Type.STRING } },
+          activeMapping: { type: Type.OBJECT, description: "Mapping from partial page names to tabs" },
+          visualTheme: {
+            type: Type.OBJECT,
+            properties: {
+              primaryColor: { type: Type.STRING },
+              styleType: { type: Type.STRING, enum: ['MAP', 'FEED', 'LIST', 'DASHBOARD'] },
+              description: { type: Type.STRING }
+            },
+            required: ["primaryColor", "styleType", "description"]
+          }
+        },
+        required: ["tabs", "activeMapping", "visualTheme"]
+      }
     },
-    required: ["softwareNameCandidates", "softwareType", "hasUi", "functionalModules", "businessFlow"]
+    required: ["softwareNameCandidates", "softwareType", "hasUi", "functionalModules", "businessFlow", "navigationDesign"]
   };
 
   return await aiClient.generateStructured<FactPack>(prompt, schema, true);

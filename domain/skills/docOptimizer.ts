@@ -12,7 +12,7 @@ export const optimizeDocStructure = async (
   onLog: (msg: string) => void
 ): Promise<string> => {
   
-  onLog(`🎩 正在唤醒 [文档优化大师] Agent...`);
+  onLog(`正在召集 [DocRefiner (文档精修 Agent)] 执行出版级对齐...`);
   
   const systemPrompt = `
     Role: Senior Technical Editor & Publishing Specialist (资深技术编辑/出版专家).
@@ -72,7 +72,7 @@ export const optimizeDocStructure = async (
   `;
 
   try {
-      onLog(`✨ 正在进行语言润色与排版重构...`);
+      onLog(`[DocRefiner] 正在执行语义升维与敏感词二次清洗...`);
       const polished = await aiClient.generateText(prompt, true); // Use Pro model for best writing
       
       // Safety Check: specific to image tags
@@ -80,15 +80,15 @@ export const optimizeDocStructure = async (
       const outputTags = polished.match(/> \[INSERT_IMAGE::.*?\]/g) || [];
       
       if (inputTags.length !== outputTags.length) {
-          onLog(`⚠️ 警告：优化后丢失了图片标记 (输入${inputTags.length} vs 输出${outputTags.length})，回滚到原始版本。`);
+          onLog(`[DocRefiner] ⚠️ 警告：检测到锚点丢失 (输入${inputTags.length} vs 输出${outputTags.length})，执行安全回滚。`);
           return rawContent;
       }
       
-      onLog(`✅ 文档优化完成：可读性与专业度已提升。`);
+      onLog(`[DocRefiner] 优化完成：文档专业度已对齐 CPCC 标准。`);
       return polished;
   } catch (e) {
       console.error("Optimization failed", e);
-      onLog(`⚠️ 优化服务响应超时，保留原始草稿。`);
+      onLog(`[DocRefiner] ⚠️ 服务响应超时，保留原始草稿。`);
       return rawContent;
   }
 };
