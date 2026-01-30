@@ -290,8 +290,13 @@ const App: React.FC = () => {
         {/* Brand Area */}
         <div className="p-6 pb-4 border-b border-white/5">
              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 ring-1 ring-white/10">
-                   <span className="text-sm font-black text-white leading-none select-none">新</span>
+                {/* 
+                   UPDATED LOGO STYLE 
+                   Old: Blue Gradient + White Text
+                   New: Silver Gradient (Zinc) + Black Text
+                */}
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-400 flex items-center justify-center shadow-lg shadow-white/10 ring-1 ring-white/20">
+                   <span className="text-sm font-black text-black leading-none select-none">新</span>
                 </div>
                 <div>
                    <div className="text-sm font-bold text-white leading-tight">陈新软 AI</div>
@@ -303,7 +308,7 @@ const App: React.FC = () => {
         {/* Steps */}
         <div className="p-6 pt-6 flex-1 overflow-y-auto custom-scrollbar">
            <h2 className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
-             工作流状态
+             Agent 思维链
            </h2>
            <StepIndicator steps={steps} currentStepId={currentStepId} />
         </div>
@@ -347,7 +352,7 @@ const App: React.FC = () => {
                             全球首个软著 Agent
                         </h1>
                         <p className="text-sm text-zinc-200">
-                            输入您的产品构想，AI 将自动编译全套申报材料 (代码、文档、申请表)
+                            无论是一个产品点子还是专业的PRD，AI 将自动编译全套申报材料 (代码、文档、申请表)
                         </p>
                     </div>
 
