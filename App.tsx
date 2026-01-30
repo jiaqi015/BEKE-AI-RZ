@@ -18,7 +18,8 @@ import { CodeView } from './components/Views/CodeView';
 
 type TabType = 'plan' | 'doc' | 'code' | 'audit';
 
-const ESTIMATED_TOTAL_MS = 25 * 60 * 1000; 
+// Update estimated time to 70 minutes
+const ESTIMATED_TOTAL_MS = 70 * 60 * 1000; 
 
 const TabButton: React.FC<{
   id: string;
@@ -63,6 +64,9 @@ const App: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [elapsedCurrentStep, setElapsedCurrentStep] = useState(0);
 
+  // Network Simulation for "Alive" feeling
+  const [networkLatency, setNetworkLatency] = useState(0);
+
   // 倒计时状态
   const [gapCountdown, setGapCountdown] = useState<number | null>(null);
 
@@ -99,9 +103,12 @@ const App: React.FC = () => {
     if (isProcessing) {
         timer = setInterval(() => {
             setElapsedCurrentStep(prev => prev + 1000);
+            // Randomize latency to simulate active network traffic (Heartbeat)
+            setNetworkLatency(Math.floor(Math.random() * 40) + 80);
         }, 1000);
     } else {
         setElapsedCurrentStep(0);
+        setNetworkLatency(0);
     }
     return () => clearInterval(timer);
   }, [isProcessing, currentStepId]);
@@ -421,7 +428,7 @@ const App: React.FC = () => {
 
                         <div className="text-sm font-medium text-red-400 text-center leading-relaxed">
                             <p>使用需保持网络楼梯连接。本工具生成的软著材料仅供娱乐，请根据实际业务自行辨别并核对。</p>
-                            <p>全程 AI 编写使用PRO模型，需要大约50分钟，耐心不断网挂机等待</p>
+                            <p>全程 AI 编写使用PRO模型，需要大约70分钟，耐心不断网挂机等待</p>
                         </div>
                     </div>
                 </div>
@@ -484,6 +491,19 @@ const App: React.FC = () => {
                                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
                                 </span>
                                 <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide min-w-[60px]">{activeStep?.name || 'Processing'}</span>
+                                
+                                {/* Network Heartbeat Visualizer */}
+                                <div className="flex items-center gap-2 px-3 border-l border-white/10 ml-2 h-4">
+                                    <div className="flex space-x-0.5 items-end h-3">
+                                         <div className="w-0.5 bg-emerald-500/80 animate-[pulse_1s_ease-in-out_infinite] h-1.5 rounded-full"></div>
+                                         <div className="w-0.5 bg-emerald-500/80 animate-[pulse_1.5s_ease-in-out_infinite] h-3 rounded-full"></div>
+                                         <div className="w-0.5 bg-emerald-500/80 animate-[pulse_0.8s_ease-in-out_infinite] h-2 rounded-full"></div>
+                                         <div className="w-0.5 bg-emerald-500/80 animate-[pulse_1.2s_ease-in-out_infinite] h-2.5 rounded-full"></div>
+                                    </div>
+                                    <span className="text-[9px] font-mono text-zinc-500">
+                                       LINK_ACTIVE <span className="text-emerald-500 font-bold tabular-nums">{networkLatency}ms</span>
+                                    </span>
+                                </div>
                              </>
                         ) : isFinished ? (
                              <>
