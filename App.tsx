@@ -10,6 +10,7 @@ import { ExportConsole } from './components/Modals/ExportConsole';
 import { AuditHistoryViewer } from './components/AuditHistoryViewer';
 import { StepStatus, RegistrationInfo } from './types';
 import { readPdfText } from './utils/pdfReader';
+import { TechStackService } from './domain/services/TechStackService';
 
 // 子视图组件
 import { PlanView } from './components/Views/PlanView';
@@ -138,33 +139,10 @@ const App: React.FC = () => {
     }
   }, [currentStepId, steps]);
 
+  // REFACTOR: Logic delegated to Domain Service
   const handleAutoSubmitGap = () => {
     if (!context.factPack) return;
-    
-    const factPack = context.factPack;
-    const type = factPack.softwareType;
-    const isJava = type === 'Backend';
-    const isApp = type === 'App';
-
-    const defaultTools = isJava ? ['IntelliJ IDEA', 'MySQL'] : isApp ? ['Android Studio', 'Xcode'] : ['VS Code', 'Chrome'];
-    const defaultLangs = isJava ? ['Java', 'SQL'] : isApp ? ['Kotlin', 'Swift'] : ['TypeScript', 'Vue.js'];
-
-    const autoInfo: RegistrationInfo = {
-      softwareFullName: factPack.softwareNameCandidates[0] || '智能申报系统',
-      softwareAbbreviation: '',
-      version: 'V1.0.0',
-      completionDate: new Date().toISOString().split('T')[0],
-      copyrightHolder: '研发技术部',
-      devHardwareEnv: 'MacBook Pro M3; 32G RAM; 1TB SSD',
-      runHardwareEnv: isApp ? 'iOS 16+ / Android 13+' : 'Linux CentOS 7.9',
-      devSoftwareEnv: isApp ? 'macOS Sonoma' : 'Windows 11 / Linux',
-      runSoftwareEnv: isApp ? 'Mobile OS' : 'Web Browser / Node.js',
-      devTools: defaultTools,
-      programmingLanguage: defaultLangs,
-      sourceLineCount: '35000',
-      isCollaboration: false,
-    };
-
+    const autoInfo = TechStackService.generateAutoRegistration(context.factPack);
     submitGapInfo(autoInfo);
   };
 
@@ -408,7 +386,7 @@ const App: React.FC = () => {
                                     disabled={!inputPrd && !attachedFile}
                                     className="px-6 py-2 bg-white text-black text-sm font-bold rounded-lg hover:bg-zinc-200 active:scale-95 transition-all shadow-lg shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    开始编译
+                                    开始
                                 </button>
                              </div>
                         </div>

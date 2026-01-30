@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RegistrationInfo, FactPack } from '../types';
+import { TechStackService } from '../domain/services/TechStackService';
 
 interface Props {
   factPack: FactPack;
@@ -11,29 +12,8 @@ const COMMON_LANGUAGES = ['Java', 'TypeScript', 'JavaScript', 'Python', 'Go', 'C
 const COMMON_TOOLS = ['IntelliJ IDEA', 'VS Code', 'WebStorm', 'PyCharm', 'Xcode', 'Android Studio', 'MySQL', 'Redis', 'Docker', 'Nginx', 'Maven', 'Git', 'CocoaPods'];
 
 const GapFiller: React.FC<Props> = ({ factPack, onSubmit }) => {
-  const type = factPack.softwareType;
-  const isJava = type === 'Backend';
-  const isWeb = type === 'Web';
-  const isApp = type === 'App';
-  
-  // Intelligence Defaults
-  let defaultTools = ['VS Code', 'Git'];
-  let defaultLangs = ['TypeScript'];
-  let defaultDevEnv = 'macOS Sonoma 14.2 / Windows 11 Pro';
-  let defaultRunEnv = 'Linux CentOS 7.9 / Docker';
-
-  if (isJava) {
-      defaultTools = ['IntelliJ IDEA', 'MySQL', 'Redis', 'Maven'];
-      defaultLangs = ['Java', 'SQL'];
-  } else if (isApp) {
-      defaultTools = ['Android Studio', 'Xcode', 'Git'];
-      defaultLangs = ['Kotlin', 'Swift', 'Dart'];
-      defaultDevEnv = 'MacBook Pro M3 (Required for iOS)';
-      defaultRunEnv = 'iOS 16+ / Android 13+';
-  } else if (isWeb) {
-      defaultTools = ['WebStorm', 'VS Code', 'Chrome DevTools'];
-      defaultLangs = ['TypeScript', 'Vue.js', 'CSS'];
-  }
+  // REFACTOR: Use Domain Service to get defaults instead of hardcoding logic in UI
+  const defaults = TechStackService.inferDefaults(factPack);
 
   const [formData, setFormData] = useState<RegistrationInfo>({
     softwareFullName: factPack.softwareNameCandidates[0] || '',
@@ -41,12 +21,12 @@ const GapFiller: React.FC<Props> = ({ factPack, onSubmit }) => {
     version: 'V1.0.0',
     completionDate: new Date().toISOString().split('T')[0],
     copyrightHolder: '',
-    devHardwareEnv: 'MacBook Pro; Apple M3 Max; 32G RAM; 1TB SSD',
-    runHardwareEnv: isApp ? 'iPhone 14 / Xiaomi 13 (Standard Test Devices)' : 'Linux CentOS 7.9; Intel Xeon Platinum; 8 Core 16G',
-    devSoftwareEnv: defaultDevEnv,
-    runSoftwareEnv: defaultRunEnv,
-    devTools: defaultTools,
-    programmingLanguage: defaultLangs,
+    devHardwareEnv: defaults.devHardwareEnv || '',
+    runHardwareEnv: defaults.runHardwareEnv || '',
+    devSoftwareEnv: defaults.devSoftwareEnv || '',
+    runSoftwareEnv: defaults.runSoftwareEnv || '',
+    devTools: defaults.devTools || [],
+    programmingLanguage: defaults.programmingLanguage || [],
     sourceLineCount: '32500', 
     isCollaboration: false,
   });
