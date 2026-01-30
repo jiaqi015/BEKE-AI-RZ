@@ -1,18 +1,18 @@
 
-import { StepStatus, PipelineStep, LogEntry, PipelineContext, RegistrationInfo, AgentRole } from '../../types';
+import { StepStatus, PipelineStep, LogEntry, PipelineContext, RegistrationInfo, IWorkflowTask } from '../../types';
 import { db } from '../../infrastructure/db/projectDB';
-import { expandPrd, analyzePrd } from '../skills/prdAnalyst';
-import { generatePageSpecs } from '../skills/uiDesigner';
-import { renderUiImage } from '../skills/uiRenderer';
+import { logStream } from './LogStream';
+import { WorkflowEngine } from './WorkflowEngine';
 import { 
-    generateProjectIntroduction, 
-    generateAppForm, 
-    generateUserManual 
-} from '../skills/technicalWriter';
-import { generateSourceCode } from '../skills/codeGenerator';
-import { conductAudit } from '../skills/auditor';
-import { autoFixArtifacts } from '../skills/complianceRefiner';
-import { optimizeDocStructure } from '../skills/docOptimizer';
+  Agents, 
+  PrdExpansionSkill, 
+  DomainModelingSkill, 
+  UiPlanningSkill,
+  UiRenderingSkill,
+  DocGenerationSkill,
+  CodeGenerationSkill,
+  AuditSkill 
+} from '../skills/SkillAdapters';
 
 export interface PipelineState {
     steps: PipelineStep[];
@@ -23,10 +23,13 @@ export interface PipelineState {
 }
 
 /**
- * PipelineEngine: 领域调度核心 (Orchestrator)
- * 采用 DDD 思想，作为整个 Application Layer 的协调者。
+ * PipelineEngine (Application Layer)
+ * Orchestrates the "ChenXinSoft" specific business process.
+ * Acts as the bridge between UI (React) and the Domain (Workflow/Skills).
  */
 class PipelineEngine {
+    private workflowEngine = new WorkflowEngine();
+    
     private state: PipelineState = {
         steps: [
             { id: 1, name: '需求深度分析', status: StepStatus.IDLE, description: '语义解析与业务建模' },
@@ -40,10 +43,7 @@ class PipelineEngine {
             prdContent: '',
             factPack: null,
             registrationInfo: null,
-            artifacts: {
-                uiImages: {},
-                auditHistory: []
-            },
+            artifacts: { uiImages: {}, auditHistory: [] },
             pageSpecs: []
         },
         currentStepId: 0,
@@ -53,7 +53,15 @@ class PipelineEngine {
 
     private subscribers: ((state: PipelineState) => void)[] = [];
 
-    constructor() {}
+    constructor() {
+        // Subscribe to LogStream to update React state
+        logStream.subscribe((entry) => {
+            this.state.logs.push(entry);
+            this.notify();
+        });
+    }
+
+    // === State Management ===
 
     async init() {
         const session = await db.loadSession();
@@ -78,6 +86,7 @@ class PipelineEngine {
 
     private notify() {
         this.subscribers.forEach(s => s({ ...this.state }));
+        // Debounce DB save ideally, but keeping simple for now
         db.saveSessionState(
             this.state.steps, 
             this.state.context, 
@@ -86,19 +95,7 @@ class PipelineEngine {
         );
     }
 
-    private addLog(message: string, type: LogEntry['type'] = 'info', role?: AgentRole) {
-        const log: LogEntry = {
-            id: Date.now() + Math.random(),
-            timestamp: new Date().toLocaleTimeString(),
-            message,
-            type,
-            role
-        };
-        this.state.logs.push(log);
-        this.notify();
-    }
-
-    private updateStep(id: number, status: StepStatus, metrics?: any) {
+    private updateStepStatus(id: number, status: StepStatus, metrics?: any) {
         const step = this.state.steps.find(s => s.id === id);
         if (step) {
             step.status = status;
@@ -107,6 +104,8 @@ class PipelineEngine {
         this.notify();
     }
 
+    // === Public Actions ===
+
     async start(rawInput: string) {
         if (this.state.isProcessing) return;
         this.state.isProcessing = true;
@@ -114,40 +113,22 @@ class PipelineEngine {
         this.state.currentStepId = 1;
         this.notify();
         try {
-            await this.runPipeline();
+            await this.runStage1();
         } catch (e) {
             console.error(e);
-            this.addLog(`Pipeline Error: ${e}`, 'error');
+            logStream.emit(`Pipeline Error: ${e}`, 'error', 'CTO');
             this.state.isProcessing = false;
             this.notify();
         }
     }
 
-    private async runPipeline() {
-        // 使用状态机驱动步骤，确保可重放性
-        const pipelineHandlers: Record<number, () => Promise<void>> = {
-            1: () => this.step1_Analysis(),
-            3: () => this.step3_UI(),
-            4: () => this.step4_Docs(),
-            5: () => this.step5_Code(),
-            6: () => this.step6_Audit()
-        };
-
-        while (this.state.isProcessing && pipelineHandlers[this.state.currentStepId]) {
-            await pipelineHandlers[this.state.currentStepId]();
-        }
-        
-        this.state.isProcessing = false;
-        this.notify();
-    }
-
     async submitGapInfo(info: RegistrationInfo) {
         this.state.context.registrationInfo = info;
-        this.updateStep(2, StepStatus.SUCCESS);
+        this.updateStepStatus(2, StepStatus.SUCCESS);
         this.state.currentStepId = 3;
         this.state.isProcessing = true;
         this.notify();
-        await this.runPipeline();
+        await this.runRemainingStages();
     }
 
     async stop() {
@@ -158,11 +139,13 @@ class PipelineEngine {
     async retry() {
         this.state.isProcessing = true;
         this.notify();
-        await this.runPipeline();
+        // Determine where to resume based on currentStepId
+        if (this.state.currentStepId === 1) await this.runStage1();
+        else if (this.state.currentStepId >= 3) await this.runRemainingStages();
     }
 
     async skipAudit() {
-        this.updateStep(6, StepStatus.SUCCESS);
+        this.updateStepStatus(6, StepStatus.SUCCESS);
         this.state.isProcessing = false;
         this.notify();
     }
@@ -172,145 +155,104 @@ class PipelineEngine {
         window.location.reload();
     }
 
-    // --- 各步骤领域逻辑 (解构) ---
+    // === Workflow Definitions (The "Plans") ===
 
-    private async step1_Analysis() {
+    private async runStage1() {
+        this.updateStepStatus(1, StepStatus.RUNNING);
         const startTime = Date.now();
-        this.updateStep(1, StepStatus.RUNNING);
-        this.addLog("启动语义解析集群...", "system", "Analyst");
-        
-        const expanded = await expandPrd(this.state.context.prdContent, (msg) => this.addLog(msg, "info", "Analyst"));
-        this.state.context.prdContent = expanded;
-        
-        this.addLog("建立业务模型真理来源 (SSOT)...", "info", "Architect");
-        const factPack = await analyzePrd(expanded);
-        this.state.context.factPack = factPack;
-        
-        this.addLog(`顶层导航已锁定：[${factPack.navigationDesign.tabs.join(' | ')}]`, "success", "Architect");
 
-        const pageSpecs = await generatePageSpecs(factPack);
-        this.state.context.pageSpecs = pageSpecs;
+        // Define Tasks for Stage 1
+        const tasks: IWorkflowTask[] = [
+            {
+                id: 'expand_prd', name: 'Expand PRD', agent: Agents.Analyst,
+                run: async (ctx) => {
+                    const skill = new PrdExpansionSkill();
+                    ctx.prdContent = await skill.execute(ctx.prdContent, ctx);
+                }
+            },
+            {
+                id: 'model_domain', name: 'Domain Modeling', agent: Agents.Architect,
+                run: async (ctx) => {
+                    const skill = new DomainModelingSkill();
+                    ctx.factPack = await skill.execute(ctx.prdContent, ctx);
+                    logStream.emit(`Locked Navigation: ${ctx.factPack.navigationDesign.tabs.join(' | ')}`, 'success', 'Architect');
+                }
+            },
+            {
+                id: 'plan_ui', name: 'UI Planning', agent: Agents.Architect,
+                run: async (ctx) => {
+                    const skill = new UiPlanningSkill();
+                    ctx.pageSpecs = await skill.execute(ctx.factPack, ctx);
+                }
+            }
+        ];
 
-        const duration = Date.now() - startTime;
-        this.updateStep(1, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 4500 });
+        await this.workflowEngine.runSequence(tasks, this.state.context);
+
+        this.updateStepStatus(1, StepStatus.SUCCESS, { durationMs: Date.now() - startTime, tokenUsage: 4500 });
+        
+        // Handover to Gap Filling
         this.state.currentStepId = 2;
-        this.updateStep(2, StepStatus.RUNNING); 
+        this.updateStepStatus(2, StepStatus.RUNNING);
         this.notify();
     }
 
-    private async step3_UI() {
-        const startTime = Date.now();
-        this.updateStep(3, StepStatus.RUNNING);
-        this.addLog("启动 UI 艺术编译引擎...", "system", "Architect");
-        
-        const specs = this.state.context.pageSpecs || [];
-        for (const spec of specs) {
-            this.addLog(`正在渲染 [${spec.name}] 界面...`, "info", "Architect");
-            const imgBase64 = await renderUiImage(
-                spec, 
-                this.state.context.registrationInfo!, 
-                this.state.context.factPack!
-            );
-            if (imgBase64) {
-                const url = await db.saveArtifact(spec.filename, imgBase64, 'image/png');
-                this.state.context.artifacts.uiImages[spec.filename] = url!;
-                this.notify();
-            }
-        }
-        
-        const duration = Date.now() - startTime;
-        this.updateStep(3, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 8500 });
-        this.state.currentStepId = 4;
-        this.notify();
-    }
-
-    private async step4_Docs() {
-        const startTime = Date.now();
-        this.updateStep(4, StepStatus.RUNNING);
-        this.addLog("启动合规文案集群...", "system", "Analyst");
-
-        const { factPack, registrationInfo, pageSpecs } = this.state.context;
-        
-        this.addLog("正在编制项目简介与申请表...", "info", "Analyst");
-        const intro = await generateProjectIntroduction(factPack!, registrationInfo!);
-        this.state.context.artifacts.projectIntroduction = await optimizeDocStructure(intro, 'PROJECT_INTRO', (m) => this.addLog(m, "info", "Analyst"));
-        
-        this.state.context.artifacts.appForm = await generateAppForm(factPack!, registrationInfo!);
-        
-        this.addLog("正在编制用户说明书并注入 UI 锚点...", "info", "Analyst");
-        const manual = await generateUserManual(factPack!, registrationInfo!, pageSpecs!);
-        this.state.context.artifacts.userManual = await optimizeDocStructure(manual, 'USER_MANUAL', (m) => this.addLog(m, "info", "Analyst"));
-
-        const duration = Date.now() - startTime;
-        this.updateStep(4, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 14000 });
-        this.state.currentStepId = 5;
-        this.notify();
-    }
-
-    private async step5_Code() {
-        const startTime = Date.now();
-        this.updateStep(5, StepStatus.RUNNING);
-        
-        this.addLog("召集代码特遣队启动编译...", "system", "CTO");
-
-        const { factPack, registrationInfo, pageSpecs } = this.state.context;
-        const result = await generateSourceCode(
-            factPack!, 
-            registrationInfo!, 
-            pageSpecs!, 
-            (msg, role) => this.addLog(msg, "info", role)
-        );
-        
-        this.state.context.artifacts.sourceCode = result.fullText;
-        this.state.context.artifacts.sourceTree = result.tree;
-
-        const duration = Date.now() - startTime;
-        this.updateStep(5, StepStatus.SUCCESS, { durationMs: duration, tokenUsage: 28000 });
-        this.state.currentStepId = 6;
-        this.notify();
-    }
-
-    private async step6_Audit() {
-        const startTime = Date.now();
-        this.updateStep(6, StepStatus.RUNNING);
-        this.addLog("形式审查官接入审计...", "system", "Auditor");
-
-        let round = 1;
-        let passed = false;
-        
-        while (round <= 3 && !passed) {
-            this.addLog(`启动第 ${round} 轮深度扫描...`, "info", "Auditor");
-            const report = await conductAudit(
-                this.state.context.factPack!, 
-                this.state.context.registrationInfo!, 
-                this.state.context.artifacts
-            );
-            
-            report.round = round;
-            this.state.context.artifacts.auditHistory.push(report);
-            this.notify();
-
-            if (report.passed) {
-                passed = true;
-                this.addLog("审计通过，符合 CPCC 申报标准。", "success", "Auditor");
-            } else {
-                this.addLog(`审计未通过 (${report.score})，触发自动修复机...`, "warning", "Auditor");
-                this.updateStep(6, StepStatus.FIXING);
-                
-                const fixResult = await autoFixArtifacts(
-                    this.state.context.artifacts, 
-                    report, 
-                    this.state.context.registrationInfo!,
-                    (m) => this.addLog(m, "info", "Auditor")
-                );
-                
-                this.state.context.artifacts = fixResult.artifacts;
-                round++;
-            }
+    private async runRemainingStages() {
+        // Stage 3: UI
+        if (this.state.currentStepId <= 3) {
+             this.state.currentStepId = 3;
+             this.updateStepStatus(3, StepStatus.RUNNING);
+             const start = Date.now();
+             await this.workflowEngine.runSequence([{
+                 id: 'render_ui', name: 'Render UI Assets', agent: Agents.Architect,
+                 run: async (ctx) => { await new UiRenderingSkill().execute(undefined, ctx); }
+             }], this.state.context);
+             this.updateStepStatus(3, StepStatus.SUCCESS, { durationMs: Date.now() - start, tokenUsage: 8500 });
         }
 
-        const duration = Date.now() - startTime;
-        this.updateStep(6, passed ? StepStatus.SUCCESS : StepStatus.WARN, { durationMs: duration, tokenUsage: 18000 });
+        // Stage 4: Docs
+        if (this.state.isProcessing && this.state.currentStepId <= 4) {
+            this.state.currentStepId = 4;
+            this.updateStepStatus(4, StepStatus.RUNNING);
+            const start = Date.now();
+            await this.workflowEngine.runSequence([{
+                 id: 'gen_docs', name: 'Generate Documentation', agent: Agents.Analyst,
+                 run: async (ctx) => { await new DocGenerationSkill().execute(undefined, ctx); }
+             }], this.state.context);
+            this.updateStepStatus(4, StepStatus.SUCCESS, { durationMs: Date.now() - start, tokenUsage: 14000 });
+        }
+
+        // Stage 5: Code
+        if (this.state.isProcessing && this.state.currentStepId <= 5) {
+            this.state.currentStepId = 5;
+            this.updateStepStatus(5, StepStatus.RUNNING);
+            const start = Date.now();
+            await this.workflowEngine.runSequence([{
+                 id: 'gen_code', name: 'Compile Source Code', agent: Agents.CTO,
+                 run: async (ctx) => { await new CodeGenerationSkill().execute(undefined, ctx); }
+             }], this.state.context);
+            this.updateStepStatus(5, StepStatus.SUCCESS, { durationMs: Date.now() - start, tokenUsage: 28000 });
+        }
+
+        // Stage 6: Audit
+        if (this.state.isProcessing && this.state.currentStepId <= 6) {
+            this.state.currentStepId = 6;
+            this.updateStepStatus(6, StepStatus.RUNNING);
+            const start = Date.now();
+            let passed = false;
+            await this.workflowEngine.runSequence([{
+                 id: 'audit', name: 'Compliance Audit', agent: Agents.Auditor,
+                 run: async (ctx) => { 
+                     passed = await new AuditSkill().execute(undefined, ctx); 
+                 }
+             }], this.state.context);
+             
+             const status = passed ? StepStatus.SUCCESS : StepStatus.WARN;
+             this.updateStepStatus(6, status, { durationMs: Date.now() - start, tokenUsage: 18000 });
+        }
+
+        this.state.isProcessing = false;
+        this.notify();
     }
 }
 

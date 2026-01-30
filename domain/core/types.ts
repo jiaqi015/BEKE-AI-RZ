@@ -10,7 +10,8 @@ export enum StepStatus {
   FIXING = 'fixing'
 }
 
-// 新增：Agent 角色定义
+// === AI Native Architecture Core Types ===
+
 export type AgentRole = 'CTO' | 'Architect' | 'Developer' | 'DevOps' | 'Auditor' | 'Analyst';
 
 export interface IAgent {
@@ -38,6 +39,8 @@ export interface IWorkflowTask {
   run: (context: PipelineContext) => Promise<void>; // Side-effect or Context Mutation
 }
 
+// ==========================================
+
 export interface PipelineStep {
   id: number;
   name: string;
@@ -54,8 +57,7 @@ export interface LogEntry {
   timestamp: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error' | 'system';
-  // 新增：结构化角色标识
-  role?: AgentRole;
+  role?: AgentRole; // Linked to Agent
   metadata?: {
     imageUrl?: string;
     fileCount?: number;
