@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PipelineContext } from '../../types';
 
 interface Props {
@@ -7,70 +7,162 @@ interface Props {
   currentStepId: number;
 }
 
-const ANALYZER_STEPS = [
-  "正在初始化自然语言理解核...",
-  "正在解构产品需求文档语义...",
-  "正在提取核心业务实体与数据对象...",
-  "正在推导系统模块间调用拓扑...",
-  "正在根据行业标准匹配最佳技术栈...",
-  "正在构建领域模型 (Domain Model)...",
-  "正在进行逻辑闭环性验证...",
-  "正在生成仿真级工程蓝图..."
+// 模拟的分析任务队列
+const ANALYSIS_TASKS = [
+  { id: 'nlp', label: '自然语言语义解构', detail: 'Tokenizing input stream...' },
+  { id: 'entity', label: '核心实体提取', detail: 'Identifying Actors & Objects...' },
+  { id: 'intent', label: '业务意图推导', detail: 'Mapping User Stories...' },
+  { id: 'arch', label: '系统架构匹配', detail: 'Selecting Tech Stack...' },
+  { id: 'model', label: '领域模型构建', detail: 'Generating ER Diagram...' },
+  { id: 'validate', label: '逻辑闭环验证', detail: 'Checking Consistency...' },
+];
+
+// 模拟的提取数据流（增加视觉丰富度）
+const SIMULATED_LOGS = [
+  "> [NLP] 检测到输入长度: 1024 tokens",
+  "> [NLP] 语义密度分析: High",
+  "> [ENTITY] 识别角色: 'User', 'Admin'",
+  "> [ENTITY] 识别对象: 'Order', 'Product'",
+  "> [INTENT] 核心流程: CRUD -> Audit",
+  "> [ARCH] 推荐架构: Microservices",
+  "> [MODEL] 实体关系: 1:N Detected",
+  "> [VALIDATE] 依赖检查: Pass",
+  "> [GEN] 准备生成 FactPack..."
 ];
 
 export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
-  const [activeStepIdx, setActiveStepIdx] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [activeTaskIndex, setActiveTaskIndex] = useState(0);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logContainerRef = useRef<HTMLDivElement>(null);
 
+  // 模拟任务进度
   useEffect(() => {
     if (!context.factPack && currentStepId >= 1) {
-      const timer = setInterval(() => {
-        setActiveStepIdx(prev => (prev + 1) % ANALYZER_STEPS.length);
-        setProgress(p => Math.min(p + 1.2, 98));
-      }, 1200);
-      return () => clearInterval(timer);
+      const taskInterval = setInterval(() => {
+        setActiveTaskIndex(prev => {
+          if (prev < ANALYSIS_TASKS.length - 1) return prev + 1;
+          return prev;
+        });
+      }, 1500); // 每1.5秒完成一个任务
+
+      return () => clearInterval(taskInterval);
     }
   }, [context.factPack, currentStepId]);
 
+  // 模拟日志流滚动
+  useEffect(() => {
+    if (!context.factPack && currentStepId >= 1) {
+      let logIdx = 0;
+      const logInterval = setInterval(() => {
+        if (logIdx < SIMULATED_LOGS.length) {
+          setLogs(prev => [...prev, SIMULATED_LOGS[logIdx]]);
+          logIdx = (logIdx + 1) % SIMULATED_LOGS.length; // 循环播放日志保持活跃感
+        }
+      }, 800);
+      return () => clearInterval(logInterval);
+    }
+  }, [context.factPack, currentStepId]);
+
+  // 日志自动滚动到底部
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  // ==================================================================================
+  // LOADING STATE (The "System Monitor" Look)
+  // ==================================================================================
   if (!context.factPack) {
     if (currentStepId >= 1) {
       return (
-        <div className="p-12 space-y-12 max-w-5xl mx-auto relative h-full">
-          {/* Cyber Background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05)_0%,transparent_70%)] pointer-events-none"></div>
+        <div className="h-full w-full bg-[#0c0c0c] text-zinc-300 font-mono p-8 md:p-12 flex flex-col relative overflow-hidden">
+          {/* Subtle Grid Background */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
           
-          <div className="flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-700 mt-20">
-             {/* Main Spinner Ring */}
-             <div className="relative w-32 h-32">
-                <div className="absolute inset-0 border-4 border-blue-500/10 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <div className="absolute inset-4 border border-purple-500/20 rounded-full animate-[ping_2s_infinite]"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-mono font-bold text-blue-500">{Math.floor(progress)}%</span>
-                </div>
-             </div>
-
-             <div className="text-center space-y-3">
-                <h2 className="text-lg font-black text-white tracking-widest uppercase flex items-center gap-3 justify-center">
-                   <span className="inline-block w-2 h-2 bg-blue-500 animate-pulse"></span>
-                   深度架构分析引擎已启动
+          <div className="relative z-10 max-w-6xl mx-auto w-full h-full flex flex-col gap-8">
+            
+            {/* Header Status */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 bg-blue-500 animate-pulse"></div>
+                  深度架构分析引擎
                 </h2>
-                <div className="h-6 overflow-hidden">
-                    <p className="text-zinc-400 font-mono text-sm animate-in slide-in-from-bottom-2">
-                        {ANALYZER_STEPS[activeStepIdx]}
-                    </p>
-                </div>
-             </div>
+                <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">Deep Architecture Analysis Engine // v3.0.1</p>
+              </div>
+              <div className="text-right hidden md:block">
+                <div className="text-xs text-zinc-500">ELAPSED</div>
+                <div className="text-lg font-bold text-blue-400 tabular-nums">00:0{activeTaskIndex + 1}:42</div>
+              </div>
+            </div>
 
-             {/* Skeleton Pulse */}
-             <div className="w-full max-w-md space-y-4">
-                <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                    {[1,2,3,4].map(i => <div key={i} className={`h-1 rounded-full ${progress > i*25 ? 'bg-blue-500' : 'bg-zinc-800'} transition-colors duration-1000`}></div>)}
-                </div>
-             </div>
+            {/* Main Monitor Content */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 min-h-0">
+              
+              {/* Left Column: Task Checklist */}
+              <div className="flex flex-col gap-1 overflow-y-auto pr-2">
+                <div className="text-[10px] font-bold text-zinc-600 uppercase mb-4 tracking-wider">Execution Pipeline</div>
+                {ANALYSIS_TASKS.map((task, idx) => {
+                  const status = idx < activeTaskIndex ? 'done' : idx === activeTaskIndex ? 'running' : 'pending';
+                  
+                  return (
+                    <div 
+                      key={task.id} 
+                      className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-500 ${
+                        status === 'running' 
+                          ? 'bg-blue-900/10 border-blue-500/30 text-white' 
+                          : status === 'done'
+                            ? 'bg-zinc-900/30 border-white/5 text-zinc-400'
+                            : 'bg-transparent border-transparent text-zinc-700 opacity-50'
+                      }`}
+                    >
+                      {/* Icon */}
+                      <div className="w-5 flex justify-center shrink-0">
+                        {status === 'done' && <span className="text-emerald-500">✓</span>}
+                        {status === 'running' && <span className="block w-2 h-2 bg-blue-500 rounded-full animate-ping"></span>}
+                        {status === 'pending' && <span className="block w-1.5 h-1.5 bg-zinc-700 rounded-full"></span>}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1">
+                         <div className="text-sm font-bold flex justify-between">
+                            {task.label}
+                            {status === 'running' && <span className="text-[10px] font-normal text-blue-400 animate-pulse">PROCESSING</span>}
+                         </div>
+                         <div className="text-[10px] opacity-60 font-mono mt-0.5">
+                            {status === 'pending' ? 'Waiting...' : task.detail}
+                         </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Right Column: Live Data Stream */}
+              <div className="flex flex-col bg-black border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                 <div className="bg-zinc-900/50 px-4 py-2 border-b border-white/5 flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">Live Output Stream</span>
+                    <div className="flex gap-1.5">
+                       <div className="w-2 h-2 rounded-full bg-red-500/20"></div>
+                       <div className="w-2 h-2 rounded-full bg-yellow-500/20"></div>
+                       <div className="w-2 h-2 rounded-full bg-green-500/20"></div>
+                    </div>
+                 </div>
+                 <div 
+                    ref={logContainerRef}
+                    className="flex-1 p-4 font-mono text-xs space-y-2 overflow-y-auto custom-scrollbar text-zinc-300"
+                 >
+                    {logs.map((log, i) => (
+                      <div key={i} className="animate-in fade-in slide-in-from-left-2 duration-200">
+                        <span className="text-blue-500/50 mr-2">{(i+1).toString().padStart(3, '0')}</span>
+                        {log}
+                      </div>
+                    ))}
+                    <div className="w-2 h-4 bg-blue-500 animate-pulse inline-block align-middle ml-1"></div>
+                 </div>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -78,6 +170,9 @@ export const PlanView: React.FC<Props> = ({ context, currentStepId }) => {
     return <div className="h-full flex items-center justify-center opacity-30 font-mono text-xs uppercase tracking-[0.2em]">待机中...</div>;
   }
 
+  // ==================================================================================
+  // FINISHED STATE (Result View)
+  // ==================================================================================
   const { factPack } = context;
 
   return (
