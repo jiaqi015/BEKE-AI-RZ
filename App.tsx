@@ -359,8 +359,10 @@ const App: React.FC = () => {
                         <div className="relative bg-[#0F0F11] border border-white/10 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/5">
                              <textarea
                                 className="w-full h-40 p-6 bg-transparent outline-none text-base text-zinc-100 placeholder-zinc-400 resize-none font-mono leading-relaxed custom-scrollbar"
-                                placeholder={`> 在此输入需求描述...
-例如：我想要一个基于 AI 的家庭植物养护系统，可以通过摄像头识别植物状态，并自动控制浇水设备。包含用户 App 和管理后台。`}
+                                placeholder={`> 在此输入系统需求描述（建议包含核心业务流程）...
+例如：我想要一个基于 SpringCloud + Vue3 的“智慧物流供应链管理平台”。
+核心功能包含：WMS 仓储管理（入库/出库/盘点）、TMS 运输调度（车辆/路径优化）、OMS 订单中心以及 BI 大屏可视化分析。
+系统需支撑日均 100万+ 订单量，包含 PDA 手持端接口。`}
                                 value={inputPrd}
                                 onChange={(e) => setInputPrd(e.target.value)}
                              />
